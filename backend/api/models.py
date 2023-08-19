@@ -1,16 +1,25 @@
 from django.db import models
+from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.hashers import make_password
 
-class User(models.Model):
+class User(AbstractUser):
     ROLES = (
         ('customer', 'Customer'),
         ('event_organizer', 'Event Organizer'),
         ('administrator', 'Administrator'),
     )
-    username = models.CharField(max_length=150, unique=True)
-    email = models.EmailField(unique=True)
-    password = models.CharField(max_length=128)
-    role = models.CharField(max_length=15, choices=ROLES, default='customer')
-    created_at = models.DateTimeField(auto_now_add=True)
+    username = models.CharField(max_length=150, unique=True, blank=False)
+    email = models.EmailField(unique=True, blank=False)
+    # password = models.CharField(max_length=128)
+    role = models.CharField(max_length=15, choices=ROLES, default='customer', blank=False)
+    created_at = models.DateTimeField(auto_now_add=True, blank=False)
+
+    def __repr__(self):
+        return f'{self.username}, {self.email}, {self.role}'
+    
+    def save(self, *args, **kwargs):
+        self.password = make_password(self.password)
+        super(User, self).save(*args, **kwargs)
 
 class Event(models.Model):
     STATUS_CHOICES = (
