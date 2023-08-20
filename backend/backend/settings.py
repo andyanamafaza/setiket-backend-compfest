@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/4.0/ref/settings/
 
 from pathlib import Path
 from datetime import timedelta
+from cloudinary import config as cloudinary_config
 from os.path import join as os_path_join
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -43,7 +44,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',
     'api',
-
+    'cloudinary'
 ]
 
 AUTH_USER_MODEL = 'api.User'
@@ -64,6 +65,14 @@ SIMPLE_JWT = {
     'ALGORITHM':'HS256',
     'SIGNING_KEY':SECRET_KEY,
 }
+
+CLOUDINARY_ROOT_URL = 'https://res.cloudinary.com/setiket/image/upload/'
+
+cloudinary_config( 
+  cloud_name = "setiket", 
+  api_key = "451252258413125", 
+  api_secret = "v1dbBdgc4_XYJ6BaE4QqrzhZdZ0" 
+)
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

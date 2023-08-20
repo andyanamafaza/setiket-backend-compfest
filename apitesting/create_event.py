@@ -1,9 +1,13 @@
 import requests
 import time
+
+with open('Twibbon.png', 'rb') as image_file:
+    image_data = image_file.read()
+
 endpoint = 'http://localhost:5001/api'
 login_data = {
-    'username':'rizqi',
-    'password':'rizqi'
+    'username':'rizq',
+    'password':'rizq'
 }
 login = requests.post(f'{endpoint}/auth/',data=login_data)
 
@@ -15,13 +19,14 @@ if login.status_code == 200:
     }
     for i in range(2):
         data = {
-        'title':f'Event Baru{i+1}',
-        'date':'2023-08-20',
-        'ticket_quantity':100,
-        'description':'Event Baru nich',
-        'status':'approved'
+            'title': 'Event Baru',
+            'date': '2023-08-20',
+            'ticket_quantity': 100,
+            'description': 'Event Baru nich',
+            'status': 'approved',
         }
-        response = requests.post(f'{endpoint}/event/create/',data=data,headers=headers)
+        files = {'image': ('image.jpg', image_data)}
+        response = requests.post(f'{endpoint}/event/create/',data=data,headers=headers,files=files)
         if response.status_code != 201:
             print('asking refresh token')
             refresh_token = login['refresh']

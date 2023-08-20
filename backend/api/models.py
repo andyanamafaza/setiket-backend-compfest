@@ -1,17 +1,12 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
-from django.contrib.auth.hashers import make_password
+from django.conf import settings
+from cloudinary.models import CloudinaryField
 from datetime import datetime
 import uuid
 import os
 
-class User(AbstractUser):
-    def get_path(instance, filename):
-        ext = filename.split('.')[-1]
-        timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-        filename = f'{timestamp}_{uuid.uuid4().hex}.{ext}'
-        return os.path.join('images/profilepicture/', filename)
-    
+class User(AbstractUser): 
     ROLES = (
         ('customer', 'Customer'),
         ('event_organizer', 'Event Organizer'),
@@ -23,20 +18,20 @@ class User(AbstractUser):
     email = models.EmailField(unique=True, blank=False)
     phone_number = models.CharField(max_length=15, unique=True, blank=False,default='0812')
     # password = models.CharField(max_length=128)
-    image = models.ImageField(upload_to=get_path, blank=True)
+    image = CloudinaryField(
+        'image',
+        resource_type='image',
+        )
     role = models.CharField(max_length=15, choices=ROLES, default='customer', blank=False)
     created_at = models.DateTimeField(auto_now_add=True, blank=False)
 
     def __repr__(self):
         return f'{self.username}, {self.email}, {self.role}'
+    
+    def get_image_url(self):
+        return'{}{}'.format(settings.CLOUDINARY_ROOT_URL,self.image)
 
 class Event(models.Model):
-    def get_path(instance, filename):
-        ext = filename.split('.')[-1]
-        timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-        filename = f'{timestamp}_{uuid.uuid4().hex}.{ext}'
-        return os.path.join('images/eventpicture/', filename)
-    
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     STATUS_CHOICES = (
         ('pending', 'Pending'),
@@ -44,7 +39,10 @@ class Event(models.Model):
         ('rejected', 'Rejected'),
     )
     title = models.CharField(max_length=255, blank=False)
-    image = models.ImageField(upload_to=get_path, blank=True)
+    image = CloudinaryField(
+        'image',
+        resource_type='image'
+        )
     description = models.TextField()
     date = models.DateTimeField()
     location = models.TextField()
@@ -55,6 +53,9 @@ class Event(models.Model):
     message = models.TextField()
     organizer = models.ForeignKey(User, on_delete=models.CASCADE, related_name='organized_events')
     created_at = models.DateTimeField(auto_now_add=True)
+
+    def get_image_url(self):
+        return'{}{}'.format(settings.CLOUDINARY_ROOT_URL,self.image)
 
 class Ticket(models.Model):
     title = models.CharField(max_length=255)
