@@ -39,3 +39,22 @@ class EventSerializers(serializers.ModelSerializer):
     def get_request_user(self,obj):
         return str(self.context['request'].user)
     
+
+class UserSerializers(serializers.ModelSerializer):
+    class Meta:
+        model = models.User
+        fields = [
+            'id',
+            'username',
+            'password',
+            'email',
+            'phone_number',
+            'image',
+            'role',
+        ]
+        extra_kwargs = {
+            'password':{'write_only':True}
+        }
+    def create(self,validated_data):
+        user = models.User.objects.create_user(**validated_data)
+        return user

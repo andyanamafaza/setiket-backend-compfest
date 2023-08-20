@@ -6,7 +6,7 @@ class IsAdminOrEventOrganizers(permissions.DjangoModelPermissions):
         print(request)
         if not request.user.is_authenticated:
             return False
-        return request.user.role == 'event_organizer' or True
+        return request.user.role == 'event_organizer' or request.user.role == 'administrator'
 
 
 class IsAdminOrOwner(permissions.BasePermission):

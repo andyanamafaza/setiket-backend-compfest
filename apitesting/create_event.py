@@ -13,7 +13,7 @@ if login.status_code == 200:
     headers = {
         'Authorization':'Bearer '+login['access']
     }
-    for i in range(5):
+    for i in range(2):
         data = {
         'title':f'Event Baru{i+1}',
         'date':'2023-08-20',
@@ -29,4 +29,3 @@ if login.status_code == 200:
             print(refresh_request.json())
             headers['Authorization'] ='Bearer '+refresh_request.json()['access']
         print(response.json())
-        time.sleep(5)

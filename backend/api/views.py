@@ -5,7 +5,7 @@ from rest_framework import status
 from rest_framework_simplejwt.tokens import RefreshToken
 from . import models
 from . import permissions as custom_permissions
-from .serializers import EventSerializers
+from .serializers import EventSerializers,UserSerializers
 
 # Create your views here.
 #sessionauth is only development only, later will replace with jwt
@@ -49,6 +49,16 @@ class EventListOwnerView(generics.ListAPIView):
     queryset = models.Event.objects.all() # add the queryset variable here
     def get_queryset(self):
         return self.queryset.filter(organizer=self.request.user) # use the queryset variable here
+
+
+class RegisterUserView(generics.CreateAPIView):
+    queryset = models.User.objects.all()
+    serializer_class = UserSerializers
+    authentication_classes = [JWTAuthentication,authentication.TokenAuthentication,authentication.SessionAuthentication]
+    permission_classes = [permissions.AllowAny]
+    def perform_create(self,serializer):
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
 
 
 class LogoutView(generics.GenericAPIView):
