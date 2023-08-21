@@ -64,3 +64,13 @@ class UserSerializers(serializers.ModelSerializer):
     def create(self,validated_data):
         user = models.User.objects.create_user(**validated_data)
         return user
+    
+class AdminListUserSerializers(serializers.ModelSerializer):
+    class Meta:
+        model = models.User
+        fields = [
+            'id',
+            'username',
+            'email',
+            'role',
+        ]
