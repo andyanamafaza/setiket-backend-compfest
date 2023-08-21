@@ -14,6 +14,7 @@ from pathlib import Path
 from datetime import timedelta
 from cloudinary import config as cloudinary_config
 from os.path import join as os_path_join
+from dj_database_url import parse as dj_database_url_parse
 import environ
 
 env = environ.Env()
@@ -125,11 +126,10 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 # https://docs.djangoproject.com/en/4.0/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    'default':dj_database_url_parse(env('DATABASE_URL'))
 }
+
+# DATABASES['default'] = dj_database_url_parse(env('DATABASE_URL'))
 
 
 # Password validation
