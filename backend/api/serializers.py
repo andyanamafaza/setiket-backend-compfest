@@ -5,7 +5,7 @@ from datetime import datetime
 class EventSerializers(serializers.ModelSerializer):
     owner = serializers.SerializerMethodField(read_only=True)
     request_user = serializers.SerializerMethodField(read_only=True)
-    image_url = serializers.SerializerMethodField(read_only=True)
+    image_url = serializers.CharField(read_only=True)
     image = serializers.ImageField(write_only=True)
     judul = serializers.CharField(read_only=True,source='title')
     status = serializers.CharField(read_only=True)
@@ -42,12 +42,10 @@ class EventSerializers(serializers.ModelSerializer):
     def get_request_user(self,obj):
         return str(self.context['request'].user)
     
-    def get_image_url(self,obj):
-        return obj.get_image_url()
-    
 
 class UserSerializers(serializers.ModelSerializer):
     role = serializers.CharField(read_only=True)
+    image = serializers.ImageField(write_only=True)
     class Meta:
         model = models.User
         fields = [
@@ -57,6 +55,7 @@ class UserSerializers(serializers.ModelSerializer):
             'email',
             'phone_number',
             'image',
+            'image_url',
             'role',
         ]
         extra_kwargs = {

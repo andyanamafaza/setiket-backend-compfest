@@ -1,3 +1,4 @@
+python == 3.11.4
 django >= 4.0.0,<4.1.0
 djangorestframework
 djangorestframework-simplejwt
@@ -8,3 +9,5 @@ requests
 Pillow
 cloudinary
 drf-spectacular
+django-environ
+gunicorn
