@@ -5,6 +5,8 @@ from datetime import datetime
 class EventSerializers(serializers.ModelSerializer):
     owner = serializers.SerializerMethodField(read_only=True)
     request_user = serializers.SerializerMethodField(read_only=True)
+    image_url = serializers.SerializerMethodField(read_only=True)
+    image = serializers.ImageField(write_only=True)
     judul = serializers.CharField(read_only=True,source='title')
     status = serializers.CharField(read_only=True)
     title = serializers.CharField(write_only=True)
@@ -25,7 +27,8 @@ class EventSerializers(serializers.ModelSerializer):
             'request_user',
             'url_detail',
             'ticket_quantity',
-            'image'
+            'image',
+            'image_url'
         ]
     def validate_date(self,value):
         print(value,'va;')
@@ -39,3 +42,25 @@ class EventSerializers(serializers.ModelSerializer):
     def get_request_user(self,obj):
         return str(self.context['request'].user)
     
+    def get_image_url(self,obj):
+        return obj.get_image_url()
+    
+
+class UserSerializers(serializers.ModelSerializer):
+    class Meta:
+        model = models.User
+        fields = [
+            'id',
+            'username',
+            'password',
+            'email',
+            'phone_number',
+            'image',
+            'role',
+        ]
+        extra_kwargs = {
+            'password':{'write_only':True}
+        }
+    def create(self,validated_data):
+        user = models.User.objects.create_user(**validated_data)
+        return user
