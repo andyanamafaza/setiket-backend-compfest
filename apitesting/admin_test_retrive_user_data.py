@@ -26,7 +26,7 @@ if login_response.status_code == 200:
         # Debug: Print headers for troubleshooting
         print("Headers:", headers)
 
-        overview_response = requests.get(f'{api_base_url}/admin/overview/', headers=headers)
+        overview_response = requests.get(f'{api_base_url}/admin/user-list/', headers=headers)
         
         # Debug: Print overview response for troubleshooting
         print("Overview response:", overview_response.status_code)

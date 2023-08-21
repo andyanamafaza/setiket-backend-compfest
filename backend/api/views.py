@@ -5,7 +5,7 @@ from rest_framework import status
 from rest_framework_simplejwt.tokens import RefreshToken
 from . import models
 from . import permissions as custom_permissions
-from .serializers import EventSerializers,UserSerializers, AdminOverviewRegisteredUser
+from .serializers import EventSerializers, UserSerializers, AdminListUserSerializers
 
 # Create your views here.
 #sessionauth is only development only, later will replace with jwt
@@ -74,8 +74,8 @@ class LogoutView(generics.GenericAPIView):
             return Response(status=status.HTTP_400_BAD_REQUEST)
         
 
-class AdminOverviewRegisteredUser(generics.ListAPIView):
+class AdminListUserView(generics.ListAPIView):
     queryset = models.User.objects.all()
-    serializer_class = AdminOverviewRegisteredUser
+    serializer_class = AdminListUserSerializers
     authentication_classes = [JWTAuthentication,authentication.TokenAuthentication,authentication.SessionAuthentication]
     permission_classes = [custom_permissions.IsAdministrator]

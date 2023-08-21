@@ -16,6 +16,6 @@ urlpatterns = [
     path('event/',EventListView.as_view(),name='event_list'),
     path('ownevent/',EventListOwnerView.as_view(),name='event_own_list'),
     path('event/create/',EventCreateView.as_view(),name='event_create'),
-    path('admin/overview/',AdminOverviewRegisteredUser.as_view(),name='admin_overview'),
+    path('admin/user-list/', AdminListUserView.as_view(), name='admin_user_list'),
 ]
 
