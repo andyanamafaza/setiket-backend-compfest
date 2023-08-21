@@ -16,9 +16,14 @@ from cloudinary import config as cloudinary_config
 from os.path import join as os_path_join
 from dj_database_url import parse as dj_database_url_parse
 import environ
+import mimetypes
+
 
 env = environ.Env()
 environ.Env.read_env()
+
+mimetypes.add_type("text/javascript", ".js", True)
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -129,8 +134,6 @@ DATABASES = {
     'default':dj_database_url_parse(env('DATABASE_URL'))
 }
 
-# DATABASES['default'] = dj_database_url_parse(env('DATABASE_URL'))
-
 
 # Password validation
 # https://docs.djangoproject.com/en/4.0/ref/settings/#auth-password-validators
@@ -166,7 +169,7 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.0/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os_path_join(BASE_DIR, 'media')
 # Default primary key field type
