@@ -47,6 +47,7 @@ class EventSerializers(serializers.ModelSerializer):
     
 
 class UserSerializers(serializers.ModelSerializer):
+    role = serializers.CharField(read_only=True)
     class Meta:
         model = models.User
         fields = [
@@ -66,6 +67,7 @@ class UserSerializers(serializers.ModelSerializer):
         return user
     
 class AdminListUserSerializers(serializers.ModelSerializer):
+    role = serializers.CharField(read_only=True)
     class Meta:
         model = models.User
         fields = [

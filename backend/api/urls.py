@@ -7,7 +7,7 @@ from .views import *
 from django.conf import settings
 
 urlpatterns = [
-    path('auth/', TokenObtainPairView.as_view(),name='api_token_auth'),
+    path('auth/login/', TokenObtainPairView.as_view(),name='api_token_auth'),
     path('auth/register/', RegisterUserView.as_view(),name='api_token_register'),
     path('auth/refresh/', TokenRefreshView.as_view(),name='api_token_refresh'),
     path('auth/logout/', LogoutView.as_view(),name='api_token_logout'),

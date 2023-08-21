@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'drf_spectacular',
     'rest_framework',
     'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',
@@ -50,6 +51,7 @@ INSTALLED_APPS = [
 AUTH_USER_MODEL = 'api.User'
 
 REST_FRAMEWORK = {
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication',
         'rest_framework.authentication.BasicAuthentication',
@@ -73,6 +75,16 @@ cloudinary_config(
   api_key = "451252258413125", 
   api_secret = "v1dbBdgc4_XYJ6BaE4QqrzhZdZ0" 
 )
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'Setiket API',
+    'DESCRIPTION': 'This is Setiket API Documentation Contract',
+    'VERSION': '1.0.0',
+    'COMPONENT_SPLIT_REQUEST': True,
+    'SERVE_INCLUDE_SCHEMA': False,
+    # OTHER SETTINGS
+}
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
