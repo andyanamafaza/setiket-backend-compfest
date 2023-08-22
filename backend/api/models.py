@@ -19,12 +19,11 @@ class User(AbstractUser):
     image = CloudinaryField('image', resource_type='image')
     role = models.CharField(max_length=15, choices=ROLES, default='customer', blank=False)
     created_at = models.DateTimeField(auto_now_add=True, blank=False)
-
+    @property
+    def image_url(self):
+        return '{}{}'.format(settings.CLOUDINARY_ROOT_URL, self.image)
     def __repr__(self):
         return f'{self.username}, {self.email}, {self.role}'
-
-    def get_image_url(self):
-        return '{}{}'.format(settings.CLOUDINARY_ROOT_URL, self.image)
 
 
 class Event(models.Model):
@@ -57,8 +56,8 @@ class Event(models.Model):
     message = models.TextField()
     organizer = models.ForeignKey(User, on_delete=models.CASCADE, related_name='organized_events')
     created_at = models.DateTimeField(auto_now_add=True)
-
-    def get_image_url(self):
+    @property
+    def image_url(self):
         return '{}{}'.format(settings.CLOUDINARY_ROOT_URL, self.image)
 
 
