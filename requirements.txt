@@ -12,3 +12,4 @@ django-environ
 gunicorn
 psycopg2-binary
 dj-database-url
+WhiteNoise

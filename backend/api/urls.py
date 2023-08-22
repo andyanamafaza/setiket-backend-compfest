@@ -4,7 +4,7 @@ from rest_framework_simplejwt.views import (
     TokenRefreshView,
 )
 from .views import *
-from django.conf import settings
+
 
 urlpatterns = [
     path('auth/login/', TokenObtainPairView.as_view(),name='api_token_auth'),
