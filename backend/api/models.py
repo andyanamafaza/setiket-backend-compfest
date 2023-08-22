@@ -80,7 +80,17 @@ class Ticket(models.Model):
     description = models.TextField()
     price = models.DecimalField(max_digits=10, decimal_places=2)
     created_at = models.DateTimeField(auto_now_add=True)
-
+    def ticket_info(self):
+        return {
+            'id': self.id,
+            'title': self.title,
+            'start_time': self.start_time,
+            'end_time': self.end_time,
+            'ticket_quantity': self.ticket_quantity,
+            'ticket_type': self.ticket_type,
+            'description': self.description,
+            'price': self.price,
+        }
 
 class UserTicket(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
