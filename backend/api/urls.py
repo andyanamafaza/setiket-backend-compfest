@@ -20,6 +20,10 @@ urlpatterns = [
     path('ticket/create/',TicketCreateView.as_view(),name='ticket_create'),
     path('event/create/', EventCreateView.as_view(), name='event_create'),
 
+    # account
+    path('account/', AccountView.as_view(), name='account'),
+    path('account/<uuid:id>/', AccountDetailView.as_view(), name='account_detail'),
+
     # Event Organizer Proposals
     path('event-organizer-proposal/create/', EventOrganizerProposalCreateView.as_view(), name='event_organizer_proposal_create'),
     path('event-organizer-proposal/<uuid:id>/', EventOrganizerProposalDetailView.as_view(), name='event_organizer_proposal_detail'),

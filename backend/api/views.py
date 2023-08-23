@@ -189,3 +189,19 @@ class AdminEventOrganizerProposalDetailView(generics.RetrieveAPIView):
     authentication_classes = [JWTAuthentication, authentication.TokenAuthentication, authentication.SessionAuthentication]
     permission_classes = [custom_permissions.IsAdministrator]
     lookup_field = 'id'
+
+
+class AccountView(generics.RetrieveUpdateAPIView):
+    queryset = models.User.objects.all()
+    serializer_class = UserSerializers
+    authentication_classes = [JWTAuthentication, authentication.TokenAuthentication, authentication.SessionAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
+    def get_object(self):
+        return self.request.user
+
+class AccountDetailView(generics.RetrieveUpdateAPIView):
+    queryset = models.User.objects.all()
+    serializer_class = UserSerializers
+    authentication_classes = [JWTAuthentication, authentication.TokenAuthentication, authentication.SessionAuthentication]
+    permission_classes = [custom_permissions.IsAdministrator]
+    lookup_field = 'id'

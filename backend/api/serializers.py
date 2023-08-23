@@ -222,6 +222,7 @@ class EventOrganizerProposalSerializers(serializers.ModelSerializer):
             'banner_url',
             'proposal_url'
         ]
+    @extend_schema_field(OpenApiTypes.STR)
     def get_owner(self,obj):
         return obj.organizer.username
 
