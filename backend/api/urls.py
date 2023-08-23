@@ -22,6 +22,7 @@ urlpatterns = [
 
     # account
     path('account/', AccountView.as_view(), name='account'),
+    path('account/<uuid:id>/', AccountDetailView.as_view(), name='account_detail'),
 
     # Event Organizer Proposals
     path('event-organizer-proposal/create/', EventOrganizerProposalCreateView.as_view(), name='event_organizer_proposal_create'),
