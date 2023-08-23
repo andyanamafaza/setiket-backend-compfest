@@ -67,7 +67,6 @@ class DetailEventSerializers(serializers.ModelSerializer):
     message = serializers.CharField(read_only=True)
     image = serializers.ImageField(write_only=True)
     status = serializers.CharField(read_only=True)
-    url_detail = serializers.HyperlinkedIdentityField(view_name='event_retreive',lookup_field='id')
     class Meta:
         model = models.Event
         fields = [
@@ -86,7 +85,6 @@ class DetailEventSerializers(serializers.ModelSerializer):
             'is_verified',
             'message',
             'owner',
-            'url_detail',
             'image_url'
         ]
     @extend_schema_field(OpenApiTypes.STR)
