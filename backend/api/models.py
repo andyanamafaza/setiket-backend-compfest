@@ -103,11 +103,17 @@ class EventOrganizerProposal(models.Model):
     category = models.CharField(max_length=255)
     description = models.TextField()
     location = models.TextField()
-    banner = CloudinaryField('image', resource_type='image')
-    proposal = models.FileField(upload_to='proposals/')
+    banner = CloudinaryField('banner', resource_type='image')
+    proposal = CloudinaryField('proposals', resource_type='raw', format='pdf')
     status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='pending')
     message = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
+    @property
+    def banner_url(self):
+        return '{}{}'.format(settings.CLOUDINARY_ROOT_URL, self.banner)
+    @property
+    def proposal_url(self):
+        return '{}{}'.format(settings.CLOUDINARY_ROOT_URL, self.proposal)
 
 
 class SalesData(models.Model):

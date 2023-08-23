@@ -5,7 +5,7 @@ from rest_framework import status
 from rest_framework_simplejwt.tokens import RefreshToken
 from . import models
 from . import permissions as custom_permissions
-from .serializers import EventSerializers, UserSerializers, AdminListUserSerializers
+from .serializers import EventSerializers, UserSerializers, AdminListUserSerializers, AdminListEventOrganizerSerializers, AdminListEventProposalSerializers, AdminEventProposalSerializers, EventOrganizerProposalSerializers
 
 # Create your views here.
 #sessionauth is only development only, later will replace with jwt
@@ -79,3 +79,92 @@ class AdminListUserView(generics.ListAPIView):
     serializer_class = AdminListUserSerializers
     authentication_classes = [JWTAuthentication,authentication.TokenAuthentication,authentication.SessionAuthentication]
     permission_classes = [custom_permissions.IsAdministrator]
+    
+class AdminEventOrganizerDetailListView(generics.ListAPIView):
+    serializer_class = EventSerializers
+    authentication_classes = [JWTAuthentication, authentication.TokenAuthentication, authentication.SessionAuthentication]
+    permission_classes = [custom_permissions.IsAdministrator]
+
+    def get_queryset(self):
+        organizer_id = self.kwargs['id']
+        return models.Event.objects.filter(organizer_id=organizer_id)
+
+class AdminListEventOrganizerView(generics.ListAPIView):
+    queryset = models.User.objects.filter(role='event_organizer')
+    serializer_class = AdminListEventOrganizerSerializers
+    authentication_classes = [JWTAuthentication, authentication.TokenAuthentication, authentication.SessionAuthentication]
+    permission_classes = [custom_permissions.IsAdministrator]
+
+class AdminEventProposalListView(generics.ListAPIView):
+    queryset = models.Event.objects.all()
+    serializer_class = AdminListEventProposalSerializers
+    authentication_classes = [JWTAuthentication, authentication.TokenAuthentication, authentication.SessionAuthentication]
+    permission_classes = [custom_permissions.IsAdministrator]
+
+class AdminEventProposalConfirmView(generics.UpdateAPIView):
+    queryset = models.Event.objects.all()
+    serializer_class = AdminEventProposalSerializers
+    authentication_classes = [JWTAuthentication, authentication.TokenAuthentication, authentication.SessionAuthentication]
+    permission_classes = [custom_permissions.IsAdministrator]
+    lookup_field = 'id'
+
+class AdminEventProposalDetailView(generics.RetrieveAPIView):
+    queryset = models.Event.objects.all()
+    serializer_class = EventSerializers
+    authentication_classes = [JWTAuthentication, authentication.TokenAuthentication, authentication.SessionAuthentication]
+    permission_classes = [custom_permissions.IsAdministrator]
+    lookup_field = 'id'
+
+class EventOrganizerProposalCreateView(generics.CreateAPIView):
+    queryset = models.EventOrganizerProposal.objects.all()
+    serializer_class = EventOrganizerProposalSerializers
+    authentication_classes = [JWTAuthentication, authentication.TokenAuthentication, authentication.SessionAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
+
+    def perform_create(self,serializer):
+        serializer.is_valid(raise_exception=True)
+        serializer.save(organizer=self.request.user,status='pending')
+        
+class EventOrganizerProposalListView(generics.ListAPIView):
+    queryset = models.EventOrganizerProposal.objects.all()
+    serializer_class = EventOrganizerProposalSerializers
+    authentication_classes = [JWTAuthentication, authentication.TokenAuthentication, authentication.SessionAuthentication]
+    permission_classes = [custom_permissions.IsAdminOrEventOrganizers]
+    def get_queryset(self):
+        return self.queryset.filter(organizer=self.request.user)
+    
+class EventOrganizerProposalDetailView(generics.RetrieveAPIView):
+    queryset = models.EventOrganizerProposal.objects.all()
+    serializer_class = EventOrganizerProposalSerializers
+    authentication_classes = [JWTAuthentication, authentication.TokenAuthentication, authentication.SessionAuthentication]
+    permission_classes = [custom_permissions.IsAdminOrEventOrganizers]
+    lookup_field = 'id'
+    def get_queryset(self):
+        return self.queryset.filter(organizer=self.request.user)
+    
+class AdminEventOrganizerProposalListView(generics.ListAPIView):
+    queryset = models.EventOrganizerProposal.objects.all()
+    serializer_class = AdminListEventProposalSerializers
+    authentication_classes = [JWTAuthentication, authentication.TokenAuthentication, authentication.SessionAuthentication]
+    permission_classes = [custom_permissions.IsAdministrator]
+
+class AdminEventOrganizerProposalConfirmView(generics.UpdateAPIView):
+    queryset = models.EventOrganizerProposal.objects.all()
+    serializer_class = AdminEventProposalSerializers
+    authentication_classes = [JWTAuthentication, authentication.TokenAuthentication, authentication.SessionAuthentication]
+    permission_classes = [custom_permissions.IsAdministrator]
+    lookup_field = 'id'
+    
+    def perform_update(self, serializer):
+        instance = serializer.save()
+        if instance.status == 'approved':
+            user = instance.organizer
+            user.role = 'event_organizer'
+            user.save()
+
+class AdminEventOrganizerProposalDetailView(generics.RetrieveAPIView):
+    queryset = models.EventOrganizerProposal.objects.all()
+    serializer_class = EventOrganizerProposalSerializers
+    authentication_classes = [JWTAuthentication, authentication.TokenAuthentication, authentication.SessionAuthentication]
+    permission_classes = [custom_permissions.IsAdministrator]
+    lookup_field = 'id'
