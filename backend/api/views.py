@@ -193,7 +193,7 @@ class AdminEventOrganizerProposalDetailView(generics.RetrieveAPIView):
 
 class AccountView(generics.RetrieveUpdateAPIView):
     queryset = models.User.objects.all()
-    serializer_class = UserSerializers
+    serializer_class = UserUpdateSerializers
     authentication_classes = [JWTAuthentication, authentication.TokenAuthentication, authentication.SessionAuthentication]
     permission_classes = [permissions.IsAuthenticated]
     def get_object(self):
@@ -201,7 +201,7 @@ class AccountView(generics.RetrieveUpdateAPIView):
 
 class AccountDetailView(generics.RetrieveUpdateAPIView):
     queryset = models.User.objects.all()
-    serializer_class = UserSerializers
+    serializer_class = UserUpdateSerializers
     authentication_classes = [JWTAuthentication, authentication.TokenAuthentication, authentication.SessionAuthentication]
     permission_classes = [custom_permissions.IsAdministrator]
     lookup_field = 'id'
