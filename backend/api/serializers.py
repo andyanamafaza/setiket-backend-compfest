@@ -2,7 +2,7 @@ from rest_framework import serializers
 from . import models
 from datetime import datetime
 from drf_spectacular.utils import extend_schema_field,OpenApiTypes
-
+from django.contrib.auth.hashers import make_password
 class CustomerListEventSerializers(serializers.ModelSerializer):
     organizer = serializers.SerializerMethodField(read_only=True)
     url_detail = serializers.HyperlinkedIdentityField(view_name='event_retreive',lookup_field='id')
@@ -154,6 +154,34 @@ class UserSerializers(serializers.ModelSerializer):
     def create(self,validated_data):
         user = models.User.objects.create_user(**validated_data)
         return user
+
+class UserUpdateSerializers(serializers.ModelSerializer):
+    image_url = serializers.SerializerMethodField(read_only=True)
+    class Meta:
+        model = models.User
+        fields = [
+            'id',
+            'username',
+            'password',
+            'email',
+            'phone_number',
+            'image',
+            'image_url',
+            'role',
+        ]
+        extra_kwargs = {
+            'password':{'write_only':True},
+            'id':{'read_only':True},
+            'role':{'read_only':True},
+        }
+    def validate_password(self,value):
+        if len(value) < 8:
+            raise serializers.ValidationError('Password must be at least 8 characters')
+        password = make_password(value)
+        return password
+    @extend_schema_field(OpenApiTypes.URI)
+    def get_image_url(self,obj):
+        return obj.image_url
     
 class AdminListUserSerializers(serializers.ModelSerializer):
     role = serializers.CharField(read_only=True)

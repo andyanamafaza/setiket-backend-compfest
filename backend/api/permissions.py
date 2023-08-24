@@ -30,9 +30,8 @@ class IsAdminOrOwner(permissions.BasePermission):
             return False
         return request.user.role == 'administrator' or request.user == obj.organizer
 
-class IsAdministrator(permissions.BasePermission):
+class IsAdministrator(permissions.DjangoModelPermissions):
     message = "Insufficient role permissions. Only administrators are allowed."
-
     def has_permission(self, request, view):
         if not request.user.is_authenticated:
             return False
