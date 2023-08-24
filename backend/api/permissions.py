@@ -6,6 +6,8 @@ class IsAdminOrEventOrganizers(permissions.DjangoModelPermissions):
     message = "Insufficient role permissions."
 
     def has_permission(self, request, view):
+        if request.method in permissions.SAFE_METHODS:
+            return True
         if not request.user.is_authenticated:
             return False
         return request.user.role in ['event_organizer', 'administrator']
