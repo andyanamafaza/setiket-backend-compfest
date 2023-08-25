@@ -51,6 +51,15 @@ class TicketCreateView(generics.CreateAPIView):
     serializer_class = DetailTicketSerializers
     authentication_classes = [JWTAuthentication, authentication.TokenAuthentication, authentication.SessionAuthentication]
     permission_classes = [custom_permissions.IsAdminOrEventOrganizers]
+    def perform_create(self, serializer):
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+class TicketPurchaseView(generics.CreateAPIView):
+    queryset = models.UserTicket.objects.all()
+    serializer_class = PurchaseTicketSerializers
+    authentication_classes = [JWTAuthentication, authentication.TokenAuthentication, authentication.SessionAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
     lookup_field = 'id'
     def perform_create(self, serializer):
         serializer.is_valid(raise_exception=True)

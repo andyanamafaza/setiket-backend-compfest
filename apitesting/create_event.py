@@ -25,6 +25,8 @@ if login.status_code == 200:
             'title': datas[i]['translations'][0]['title'],
             'start_date':'2023-08-24',
             'end_date':'2023-08-25',
+            'start_time':'00:00:00',
+            'end_time':'01:00:00',
             'place_name': datas[i]['translations'][0]['area'],
             'city': datas[i]['translations'][0]['city'],
             'full_address': datas[i]['translations'][0]['region'],

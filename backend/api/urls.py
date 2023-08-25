@@ -17,8 +17,11 @@ urlpatterns = [
     path('event/update/<uuid:id>/', EventUpdateView.as_view(), name='event_update'),
     path('event/',CustomerEventListView.as_view(), name='event_list'),
     path('ownevent/', EventListOwnerView.as_view(), name='event_own_list'),
-    path('ticket/create/',TicketCreateView.as_view(),name='ticket_create'),
     path('event/create/', EventCreateView.as_view(), name='event_create'),
+
+    # Ticket Views
+    path('ticket/create/',TicketCreateView.as_view(),name='ticket_create'),
+    path('ticket/purchase/',TicketPurchaseView.as_view(),name='ticket_purchase'),
 
     # account
     path('account/', AccountView.as_view(), name='account'),
