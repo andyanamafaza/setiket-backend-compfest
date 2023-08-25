@@ -67,6 +67,7 @@ class DetailEventSerializers(serializers.ModelSerializer):
     message = serializers.CharField(read_only=True)
     image = serializers.ImageField(write_only=True)
     status = serializers.CharField(read_only=True)
+    price = serializers.SerializerMethodField(read_only=True)
     class Meta:
         model = models.Event
         fields = [
@@ -90,6 +91,11 @@ class DetailEventSerializers(serializers.ModelSerializer):
     @extend_schema_field(OpenApiTypes.STR)
     def get_owner(self,obj):
         return obj.organizer.username
+    @extend_schema_field(OpenApiTypes.INT)
+    def get_price(self,obj):
+        price = models.Ticket.objects.filter(event=obj,ticket_type='paid').first()
+        price = price.price if price else 0
+        return price
 
 
 class DetailTicketSerializers(serializers.ModelSerializer):
@@ -118,7 +124,7 @@ class DetailTicketSerializers(serializers.ModelSerializer):
             if self.context['request'].user == event.organizer:
                 price = validated_data.get('price')
                 ticket_type = validated_data.get('ticket_type')
-                if price >= 0:
+                if price < 0:
                     raise serializers.ValidationError('Price must be greater or equal than 0')
                 if price > 0 and ticket_type == 'free':
                     raise serializers.ValidationError('Price must be 0 if ticket type is free')            
