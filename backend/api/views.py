@@ -29,11 +29,11 @@ class CustomerEventListView(generics.ListAPIView):
     def get_queryset(self):
         category = self.request.query_params.get('category')
         if category:
-            queryset = self.queryset.filter(category=category)
+            queryset = self.queryset.filter(category=category, status='approved')
             if queryset.exists():
                 return queryset
             return []
-        return self.queryset.all()
+        return self.queryset.filter(status='approved')
 
 class EventCreateView(generics.CreateAPIView):
     queryset = models.Event.objects.all()

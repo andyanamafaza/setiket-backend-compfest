@@ -15,6 +15,7 @@ class User(AbstractUser):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     username = models.CharField(max_length=150, unique=True, blank=False)
     email = models.EmailField(unique=True, blank=False)
+    balance = models.IntegerField(default=1000000)
     phone_number = models.CharField(max_length=15, unique=True, blank=False, default='0812')
     image = CloudinaryField('image', resource_type='image')
     role = models.CharField(max_length=15, choices=ROLES, default='customer', blank=False)
@@ -46,13 +47,14 @@ class Event(models.Model):
     description = models.TextField()
     start_date = models.DateField()
     end_date = models.DateField()
+    start_time = models.TimeField()
+    end_time = models.TimeField()
     place_name = models.CharField(max_length=255)
     city = models.CharField(max_length=255)
     full_address = models.TextField()
     location = models.TextField()
     category = models.CharField(max_length=255, choices=CATEGORY_CHOICES)
     status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='pending')
-    is_verified = models.BooleanField(default=True)
     message = models.TextField()
     organizer = models.ForeignKey(User, on_delete=models.CASCADE, related_name='organized_events')
     created_at = models.DateTimeField(auto_now_add=True)
@@ -84,6 +86,8 @@ class Ticket(models.Model):
         return {
             'id': self.id,
             'title': self.title,
+            'start_date': self.start_date,
+            'end_date': self.end_date,
             'start_time': self.start_time,
             'end_time': self.end_time,
             'ticket_quantity': self.ticket_quantity,
@@ -114,7 +118,7 @@ class EventOrganizerProposal(models.Model):
     description = models.TextField()
     location = models.TextField()
     banner = CloudinaryField('banner', resource_type='image')
-    proposal = CloudinaryField('proposals', resource_type='raw', format='pdf')
+    proposal = CloudinaryField('proposals', resource_type='image')
     status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='pending')
     message = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)

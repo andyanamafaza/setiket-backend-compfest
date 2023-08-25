@@ -7,6 +7,8 @@ class CustomerListEventSerializers(serializers.ModelSerializer):
     organizer = serializers.SerializerMethodField(read_only=True)
     url_detail = serializers.HyperlinkedIdentityField(view_name='event_retreive',lookup_field='id')
     image_url = serializers.SerializerMethodField()
+    price = serializers.SerializerMethodField(read_only=True)
+    
     class Meta:
         model = models.Event
         fields = [
@@ -15,6 +17,7 @@ class CustomerListEventSerializers(serializers.ModelSerializer):
             'image_url',
             'start_date',
             'city',
+            'price',
             'category',
             'organizer',
             'url_detail',
@@ -25,6 +28,11 @@ class CustomerListEventSerializers(serializers.ModelSerializer):
     @extend_schema_field(OpenApiTypes.STR)
     def get_organizer(self,obj):
         return obj.organizer.username
+    @extend_schema_field(OpenApiTypes.INT)
+    def get_price(self,obj):
+        price = models.Ticket.objects.filter(event=obj,ticket_type='paid').first()
+        price = price.price if price else 0
+        return price
     
 class CustomerDetailEventSerializers(serializers.ModelSerializer):
     image_url = serializers.SerializerMethodField(read_only=True)
@@ -63,11 +71,10 @@ class CustomerDetailEventSerializers(serializers.ModelSerializer):
 class DetailEventSerializers(serializers.ModelSerializer):
     owner = serializers.SerializerMethodField(read_only=True)
     image_url = serializers.CharField(read_only=True)
-    is_verified = serializers.CharField(read_only=True)
     message = serializers.CharField(read_only=True)
     image = serializers.ImageField(write_only=True)
     status = serializers.CharField(read_only=True)
-    price = serializers.SerializerMethodField(read_only=True)
+    
     class Meta:
         model = models.Event
         fields = [
@@ -83,7 +90,6 @@ class DetailEventSerializers(serializers.ModelSerializer):
             'location',
             'category',
             'status',
-            'is_verified',
             'message',
             'owner',
             'image_url'
@@ -91,11 +97,7 @@ class DetailEventSerializers(serializers.ModelSerializer):
     @extend_schema_field(OpenApiTypes.STR)
     def get_owner(self,obj):
         return obj.organizer.username
-    @extend_schema_field(OpenApiTypes.INT)
-    def get_price(self,obj):
-        price = models.Ticket.objects.filter(event=obj,ticket_type='paid').first()
-        price = price.price if price else 0
-        return price
+    
 
 
 class DetailTicketSerializers(serializers.ModelSerializer):
@@ -138,6 +140,7 @@ class UserSerializers(serializers.ModelSerializer):
     role = serializers.CharField(read_only=True)
     image = serializers.ImageField(write_only=True)
     image_url = serializers.SerializerMethodField()
+    balance = serializers.IntegerField(read_only=True)
     class Meta:
         model = models.User
         fields = [
@@ -145,6 +148,7 @@ class UserSerializers(serializers.ModelSerializer):
             'username',
             'password',
             'email',
+            'balance',
             'phone_number',
             'image',
             'image_url',
@@ -232,7 +236,6 @@ class EventOrganizerProposalSerializers(serializers.ModelSerializer):
     owner = serializers.SerializerMethodField(read_only=True)
     banner_url = serializers.CharField(read_only=True)
     proposal_url = serializers.CharField(read_only=True)
-    is_verified = serializers.CharField(read_only=True)
     message = serializers.CharField(read_only=True)
     banner = serializers.ImageField(write_only=True)
     proposal = serializers.FileField(write_only=True)
@@ -249,7 +252,6 @@ class EventOrganizerProposalSerializers(serializers.ModelSerializer):
             'location',
             'category',
             'status',
-            'is_verified',
             'message',
             'owner',
             'url_detail',
