@@ -43,15 +43,7 @@ class CustomerUpcomingEventListView(generics.ListAPIView):
     def get_queryset(self):
         user = self.request.user
         user_tickets = models.UserTicket.objects.filter(customer=user)
-        return models.Event.objects.filter(id__in=user_tickets.values_list('event_id', flat=True), status='approved')
-        
-        # jakarta_timezone = timedelta(hours=7)
-        # current_time = datetime.utcnow() + jakarta_timezone
-        
-        # upcoming_event_ids = user_tickets.filter(event__start_date__gt=current_time).values_list('event_id', flat=True)
-        
-        # return models.Event.objects.filter(id__in=upcoming_event_ids, status='approved')
-
+        return models.Event.objects.filter(id__in=user_tickets.values_list('event_id', flat=True), status='approved', end_date__gte=datetime.now().date())
 class EventCreateView(generics.CreateAPIView):
     queryset = models.Event.objects.all()
     serializer_class = DetailEventSerializers
