@@ -20,23 +20,24 @@ if login.status_code == 200:
     with open('data.json','r') as f:
         datas = json.load(f)
     datas = datas['data']
-    for i in range(len(datas)):
+    for i in range(1):
         data = {
             'title': datas[i]['translations'][0]['title'],
-            'start_date':'2023-08-24',
-            'end_date':'2023-08-25',
+            'start_date':'2023-08-26',
+            'end_date':'2023-08-27',
             'start_time':'00:00:00',
             'end_time':'01:00:00',
             'place_name': datas[i]['translations'][0]['area'],
             'city': datas[i]['translations'][0]['city'],
             'full_address': datas[i]['translations'][0]['region'],
             'location': datas[i]['translations'][0]['area'],
-            'category':'babakanciamis',
+            'category':'horror',
             'description': 'mau nonton konser asik? cuma disini tempatnya',
         }
         image = requests.get(datas[i]['images'][0]['urlMedium']).content
         files = {'image': ('image.jpg', image)}
-        response = requests.post(f'{endpoint}/event/create/',data=data,headers=headers,files=files)
+        response = requests.post(f'{endpoint}/event-organizer/event/create/',data=data,headers=headers,files=files)
+        print(response.text)
         if response.status_code != 201:
             print('asking refresh token')
             refresh_token = login['refresh']

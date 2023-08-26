@@ -4,6 +4,9 @@ from . import models
 from datetime import datetime
 from drf_spectacular.utils import extend_schema_field,OpenApiTypes
 from django.contrib.auth.hashers import make_password
+from django.core.mail import send_mail
+from django.template.loader import render_to_string
+from django.conf import settings
 class CustomerListEventSerializers(serializers.ModelSerializer):
     organizer = serializers.CharField(read_only=True,source='organizer.username')
     url_detail = serializers.HyperlinkedIdentityField(view_name='event_retreive',lookup_field='id')
@@ -216,6 +219,16 @@ class PurchaseTicketSerializers(serializers.ModelSerializer):
                     event=ticket.event,
                     sales_data=sales_data
                     )
+                send_mail(
+                    subject='Ticket Confirmation For Event '+ticket.event.title,
+                    message='Ticket Confirmation For Event '+ticket.event.title,
+                    from_email=settings.EMAIL_HOST_SENDER,
+                    auth_user = settings.EMAIL_HOST_USER,
+                    recipient_list=[f'{self.context["request"].user.email}'],
+                    auth_password=settings.EMAIL_HOST_PASSWORD,
+                    html_message = render_to_string('email_confirmation.html', {'ticket_id':user_ticket.id,'name': self.context['request'].user.username,'ticket_name':ticket.title,'ticket_event_name':ticket.event.title}),
+                    fail_silently=False
+                )
                 return user_ticket
             raise serializers.ValidationError('Ticket is sold out')
         raise serializers.ValidationError('Ticket not found')
