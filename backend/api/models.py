@@ -56,6 +56,7 @@ class Event(models.Model):
     category = models.CharField(max_length=255, choices=CATEGORY_CHOICES)
     status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='pending')
     message = models.TextField()
+    is_online = models.BooleanField(default=False)
     organizer = models.ForeignKey(User, on_delete=models.CASCADE, related_name='organized_events')
     created_at = models.DateTimeField(auto_now_add=True)
     @property
@@ -100,9 +101,10 @@ class UserTicket(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     customer = models.ForeignKey(User, on_delete=models.CASCADE)
     ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE)
+    price = models.DecimalField(max_digits=10, decimal_places=2)
     event = models.ForeignKey(Event, on_delete=models.CASCADE)
+    sales_data = models.ForeignKey('SalesData', on_delete=models.CASCADE, null=True) #moving sales data to here so salesdata can collect one or more ticket
     created_at = models.DateTimeField(auto_now_add=True)
-
 
 class EventOrganizerProposal(models.Model):
     STATUS_CHOICES = (
@@ -133,6 +135,7 @@ class EventOrganizerProposal(models.Model):
 class SalesData(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     event = models.ForeignKey(Event, on_delete=models.CASCADE)
-    ticket = models.ForeignKey(UserTicket, on_delete=models.CASCADE)
+    organizer = models.ForeignKey(User, on_delete=models.CASCADE)
+    # ticket = models.ForeignKey(UserTicket, on_delete=models.CASCADE)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     created_at = models.DateTimeField(auto_now_add=True)
