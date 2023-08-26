@@ -7,7 +7,7 @@ from . import models
 from . import permissions as custom_permissions
 from .serializers import *
 from drf_spectacular.utils import extend_schema_view,extend_schema,OpenApiParameter
-from datetime import datetime, timedelta
+from datetime import datetime
 # Create your views here.
 #sessionauth is only development only, later will replace with jwt
 
@@ -33,7 +33,7 @@ class CustomerEventListView(generics.ListAPIView):
             if queryset.exists():
                 return queryset
             return []
-        return self.queryset.filter(status='approved',end_date__gte=datetime.now().date())
+        return self.queryset.filter(status='approved', end_date__gte=datetime.now().date())
     
 class CustomerUpcomingEventListView(generics.ListAPIView):
     serializer_class = CustomerListEventSerializers
@@ -117,7 +117,6 @@ class RegisterUserView(generics.CreateAPIView):
     def perform_create(self, serializer):
         serializer.is_valid(raise_exception=True)
         serializer.save()
-
 class LogoutView(generics.GenericAPIView):
     authentication_classes = [JWTAuthentication, authentication.TokenAuthentication, authentication.SessionAuthentication]
     permission_classes = [permissions.IsAuthenticated]

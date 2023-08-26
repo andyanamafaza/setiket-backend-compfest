@@ -16,7 +16,7 @@ class User(AbstractUser):
     username = models.CharField(max_length=150, unique=True, blank=False)
     email = models.EmailField(unique=True, blank=False)
     balance = models.IntegerField(default=1000000)
-    phone_number = models.CharField(max_length=15, unique=True, blank=True,null=True, default='0812')
+    phone_number = models.CharField(max_length=15,blank=True,null=True)
     image = CloudinaryField('image', resource_type='image',blank=True,null=True)
     role = models.CharField(max_length=15, choices=ROLES, default='customer', blank=False)
     created_at = models.DateTimeField(auto_now_add=True, blank=False)
