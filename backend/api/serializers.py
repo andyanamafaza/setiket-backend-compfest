@@ -66,6 +66,7 @@ class DetailEventSerializers(serializers.ModelSerializer):
     message = serializers.CharField(read_only=True)
     image = serializers.ImageField(write_only=True)
     status = serializers.CharField(read_only=True)
+    registered_users_url = serializers.HyperlinkedIdentityField(view_name='event-users-list',lookup_field='id')
     
     class Meta:
         model = models.Event
@@ -86,7 +87,8 @@ class DetailEventSerializers(serializers.ModelSerializer):
             'status',
             'message',
             'owner',
-            'image_url'
+            'image_url',
+            'registered_users_url',
         ]
     
 
@@ -352,3 +354,13 @@ class AdminEventProposalSerializers(serializers.ModelSerializer):
             'message',
             'organizer_id'
         ]
+
+class UserTicketSerializer(serializers.ModelSerializer):
+    customer_username = serializers.CharField(source='customer.username', read_only=True)
+    costumer_email = serializers.CharField(source='customer.email', read_only=True)
+    event = serializers.CharField(source='event.title', read_only=True)
+    ticket_type = serializers.CharField(source='ticket.ticket_type', read_only=True)
+    
+    class Meta:
+        model = models.UserTicket
+        fields = ['id', 'customer_username', 'costumer_email', 'ticket_type', 'price', 'event', 'created_at']

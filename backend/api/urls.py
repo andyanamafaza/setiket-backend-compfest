@@ -15,6 +15,7 @@ urlpatterns = [
     # Event Views
     path('event/<uuid:id>/',CustomerEventRetreiveView.as_view(), name='event_retreive'),
     path('event/',CustomerEventListView.as_view(), name='event_list'),
+    path('event/upcoming/', CustomerUpcomingEventListView.as_view(), name='event_upcoming_list'),
 
     # Ticket Views
     path('ticket/create/',TicketCreateView.as_view(),name='ticket_create'),
@@ -30,6 +31,7 @@ urlpatterns = [
     path('event-organizer/event/create/', EventCreateView.as_view(), name='event_create'),
     path('event-organizer/event/update/<uuid:id>/', EventUpdateView.as_view(), name='event_update'),
     # path('event-organizer/sales-data/', EventSalesDataView.as_view(), name='event_sales_data'),
+    path('event-users/<uuid:id>/', EventUserListView.as_view(), name='event-users-list'),
 
 
     # Event Organizer Proposals
