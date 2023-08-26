@@ -7,7 +7,7 @@ from . import models
 from . import permissions as custom_permissions
 from .serializers import *
 from drf_spectacular.utils import extend_schema_view,extend_schema,OpenApiParameter
-
+from datetime import datetime, timedelta
 # Create your views here.
 #sessionauth is only development only, later will replace with jwt
 
@@ -34,6 +34,23 @@ class CustomerEventListView(generics.ListAPIView):
                 return queryset
             return []
         return self.queryset.filter(status='approved')
+    
+class CustomerUpcomingEventListView(generics.ListAPIView):
+    serializer_class = CustomerListEventSerializers
+    authentication_classes = [JWTAuthentication, authentication.TokenAuthentication, authentication.SessionAuthentication]
+    permission_classes = [custom_permissions.IsCustomerOrAdmin]
+
+    def get_queryset(self):
+        user = self.request.user
+        user_tickets = models.UserTicket.objects.filter(customer=user)
+        return models.Event.objects.filter(id__in=user_tickets.values_list('event_id', flat=True), status='approved')
+        
+        # jakarta_timezone = timedelta(hours=7)
+        # current_time = datetime.utcnow() + jakarta_timezone
+        
+        # upcoming_event_ids = user_tickets.filter(event__start_date__gt=current_time).values_list('event_id', flat=True)
+        
+        # return models.Event.objects.filter(id__in=upcoming_event_ids, status='approved')
 
 class EventCreateView(generics.CreateAPIView):
     queryset = models.Event.objects.all()
@@ -222,3 +239,14 @@ class AccountDetailView(generics.RetrieveUpdateAPIView):
     authentication_classes = [JWTAuthentication, authentication.TokenAuthentication, authentication.SessionAuthentication]
     permission_classes = [custom_permissions.IsAdministrator]
     lookup_field = 'id'
+    
+class EventUserListView(generics.ListAPIView):
+    serializer_class = UserTicketSerializer
+    authentication_classes = [JWTAuthentication, authentication.TokenAuthentication, authentication.SessionAuthentication]
+    permission_classes = [custom_permissions.IsAdminOrEventOrganizers]
+
+    def get_queryset(self):
+        event_id = self.kwargs.get('id')
+        if event_id is not None:
+            return models.UserTicket.objects.filter(ticket__event_id=event_id)
+        return models.UserTicket.objects.none()
