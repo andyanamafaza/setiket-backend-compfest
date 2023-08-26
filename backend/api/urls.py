@@ -30,7 +30,7 @@ urlpatterns = [
     path('event-organizer/ownevent/', EventListOwnerView.as_view(), name='event_own_list'),
     path('event-organizer/event/create/', EventCreateView.as_view(), name='event_create'),
     path('event-organizer/event/update/<uuid:id>/', EventUpdateView.as_view(), name='event_update'),
-    # path('event-organizer/sales-data/', EventSalesDataView.as_view(), name='event_sales_data'),
+    path('event-organizer/sales-data/', EventSalesDataView.as_view(), name='event_sales_data'),
     path('event-users/<uuid:id>/', EventUserListView.as_view(), name='event-users-list'),
 
 

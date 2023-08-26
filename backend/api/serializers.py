@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from django.db.models import Sum
 from . import models
 from datetime import datetime
 from drf_spectacular.utils import extend_schema_field,OpenApiTypes
@@ -23,7 +24,12 @@ class CustomerListEventSerializers(serializers.ModelSerializer):
             'category',
             'organizer',
             'url_detail',
+            'is_online'
         ]
+    @extend_schema_field(OpenApiTypes.BOOL)
+    def get_is_active(self,obj):
+        return obj.end_date >= datetime.now().date()
+    
     @extend_schema_field(OpenApiTypes.INT)
     def get_price(self,obj):
         price = models.Ticket.objects.filter(event=obj,ticket_type='paid').first()
@@ -187,7 +193,6 @@ class PurchaseTicketSerializers(serializers.ModelSerializer):
                 self.context['request'].user.save()
                 ticket.ticket_quantity -= 1
                 ticket.save()
-                print(ticket.event,'ticket eventtt')
                 try:
                     sales_data = models.SalesData.objects.get(event=ticket.event)
                 except models.SalesData.DoesNotExist:
@@ -200,6 +205,10 @@ class PurchaseTicketSerializers(serializers.ModelSerializer):
                     )
                 sales_data.amount += price
                 sales_data.save()
+                event = models.Event.objects.get(id=ticket.event.id)
+                event.total_sales += price
+                event.total_sold += 1
+                event.save()
                 user_ticket = models.UserTicket.objects.create(
                     customer=self.context['request'].user,
                     ticket=ticket,
@@ -211,12 +220,41 @@ class PurchaseTicketSerializers(serializers.ModelSerializer):
             raise serializers.ValidationError('Ticket is sold out')
         raise serializers.ValidationError('Ticket not found')
 
-# class EventSalesDataSerializers(serializers.Modelserializers):
 
+class EventSalesDataSerializers(serializers.ModelSerializer):
+    total_sales = serializers.SerializerMethodField(read_only=True)
+    total_active_event = serializers.SerializerMethodField(read_only=True)
+    total_sold_ticket = serializers.SerializerMethodField(read_only=True)
+    event_data = serializers.SerializerMethodField(read_only=True)
+    class Meta:
+        model = models.SalesData
+        fields = [
+            'total_sales',
+            'total_active_event',
+            'total_sold_ticket',
+            'event_data'
+        ]
+    @extend_schema_field(OpenApiTypes.INT)
+    def get_total_sales(self,obj):
+        total_sales = models.Event.objects.filter(organizer=self.context['request'].user).aggregate(Sum('total_sales'))
+        return total_sales['total_sales__sum'] if total_sales['total_sales__sum'] else 0
+    @extend_schema_field(OpenApiTypes.INT)
+    def get_total_active_event(self,obj):
+        total_active_event = models.Event.objects.filter(end_date__gte=datetime.now()).count()
+        return total_active_event
+    @extend_schema_field(OpenApiTypes.INT)
+    def get_total_sold_ticket(self,obj):
+        total_sold_ticket = models.Event.objects.filter(organizer=self.context['request'].user).aggregate(Sum('total_sold'))
+        return total_sold_ticket['total_sold__sum'] if total_sold_ticket['total_sold__sum'] else 0
+    
+    @extend_schema_field(OpenApiTypes.OBJECT)
+    def get_event_data(self,obj):
+        event_data = models.Event.objects.filter(organizer=self.context['request'].user).all()
+        return [event.get_short_description() for event in event_data]
 
 class UserSerializers(serializers.ModelSerializer):
     role = serializers.CharField(read_only=True)
-    image = serializers.ImageField(write_only=True)
+    image = serializers.ImageField(write_only=True,required=False)
     image_url = serializers.URLField(read_only=True)
     balance = serializers.IntegerField(read_only=True)
     class Meta:
@@ -235,7 +273,6 @@ class UserSerializers(serializers.ModelSerializer):
         extra_kwargs = {
             'password':{'write_only':True}
         }
-
     def create(self,validated_data):
         user = models.User.objects.create_user(**validated_data)
         return user

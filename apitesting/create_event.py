@@ -20,7 +20,7 @@ if login.status_code == 200:
     with open('data.json','r') as f:
         datas = json.load(f)
     datas = datas['data']
-    for i in range(1):
+    for i in range(len(datas)):
         data = {
             'title': datas[i]['translations'][0]['title'],
             'start_date':'2023-08-24',
