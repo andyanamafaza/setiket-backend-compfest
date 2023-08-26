@@ -16,12 +16,13 @@ class User(AbstractUser):
     username = models.CharField(max_length=150, unique=True, blank=False)
     email = models.EmailField(unique=True, blank=False)
     balance = models.IntegerField(default=1000000)
-    phone_number = models.CharField(max_length=15, unique=True, blank=False, default='0812')
-    image = CloudinaryField('image', resource_type='image')
+    phone_number = models.CharField(max_length=15, unique=True, blank=True,null=True, default='0812')
+    image = CloudinaryField('image', resource_type='image',blank=True,null=True)
     role = models.CharField(max_length=15, choices=ROLES, default='customer', blank=False)
     created_at = models.DateTimeField(auto_now_add=True, blank=False)
     @property
     def image_url(self):
+        self.image = self.image if self.image else 'ioacxjfdtuyrilislfgw'
         return '{}{}'.format(settings.CLOUDINARY_ROOT_URL, self.image)
     def __repr__(self):
         return f'{self.username}, {self.email}, {self.role}'
@@ -103,7 +104,7 @@ class UserTicket(models.Model):
     ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE)
     price = models.DecimalField(max_digits=10, decimal_places=2)
     event = models.ForeignKey(Event, on_delete=models.CASCADE)
-    sales_data = models.ForeignKey('SalesData', on_delete=models.CASCADE, null=True) #moving sales data to here so salesdata can collect one or more ticket
+    sales_data = models.ForeignKey('SalesData', on_delete=models.CASCADE, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
 class EventOrganizerProposal(models.Model):
@@ -136,6 +137,5 @@ class SalesData(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     event = models.ForeignKey(Event, on_delete=models.CASCADE)
     organizer = models.ForeignKey(User, on_delete=models.CASCADE)
-    # ticket = models.ForeignKey(UserTicket, on_delete=models.CASCADE)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     created_at = models.DateTimeField(auto_now_add=True)

@@ -8,7 +8,6 @@ class CustomerListEventSerializers(serializers.ModelSerializer):
     url_detail = serializers.HyperlinkedIdentityField(view_name='event_retreive',lookup_field='id')
     image_url = serializers.URLField(read_only=True)
     price = serializers.SerializerMethodField(read_only=True)
-    
     class Meta:
         model = models.Event
         fields = [
