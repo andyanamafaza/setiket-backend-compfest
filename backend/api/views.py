@@ -72,13 +72,21 @@ class EventUpdateView(generics.UpdateAPIView):
     permission_classes = [custom_permissions.IsAdminOrOwner]
     lookup_field = 'id'
 
+# class EventSalesDataView(generics.RetrieveAPIView):
+#     serializer_class = EventSalesDataSerializers
+#     authentication_classes = [JWTAuthentication, authentication.TokenAuthentication, authentication.SessionAuthentication]
+#     permission_classes = [custom_permissions.IsAdminOrEventOrganizers]
+#     def get_queryset(self):
+#         return models.SalesData.objects.filter()
+
+
 class EventListOwnerView(generics.ListAPIView):
+    queryset = models.Event.objects.all()
     authentication_classes = [JWTAuthentication, authentication.TokenAuthentication, authentication.SessionAuthentication]
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = DetailEventSerializers
-    queryset = models.Event.objects.all() # add the queryset variable here
     def get_queryset(self):
-        return self.queryset.filter(organizer=self.request.user) # use the queryset variable here
+        return self.queryset.filter(organizer=self.request.user)
 
 class RegisterUserView(generics.CreateAPIView):
     queryset = models.User.objects.all()

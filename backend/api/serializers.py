@@ -194,6 +194,7 @@ class PurchaseTicketSerializers(serializers.ModelSerializer):
                 if not sales_data:
                     sales_data = models.SalesData.objects.create(
                         event=ticket.event,
+                        organizer = ticket.event.organizer,
                         amount = 0,
                     )
                 sales_data.amount += price
@@ -208,6 +209,8 @@ class PurchaseTicketSerializers(serializers.ModelSerializer):
                 return user_ticket
             raise serializers.ValidationError('Ticket is sold out')
         raise serializers.ValidationError('Ticket not found')
+
+# class EventSalesDataSerializers(serializers.Modelserializers):
 
 
 class UserSerializers(serializers.ModelSerializer):

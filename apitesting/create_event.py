@@ -20,7 +20,7 @@ if login.status_code == 200:
     with open('data.json','r') as f:
         datas = json.load(f)
     datas = datas['data']
-    for i in range(len(datas)):
+    for i in range(1):
         data = {
             'title': datas[i]['translations'][0]['title'],
             'start_date':'2023-08-24',
@@ -31,7 +31,7 @@ if login.status_code == 200:
             'city': datas[i]['translations'][0]['city'],
             'full_address': datas[i]['translations'][0]['region'],
             'location': datas[i]['translations'][0]['area'],
-            'category':'konser',
+            'category':'babakanciamis',
             'description': 'mau nonton konser asik? cuma disini tempatnya',
         }
         image = requests.get(datas[i]['images'][0]['urlMedium']).content
