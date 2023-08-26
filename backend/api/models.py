@@ -53,6 +53,8 @@ class Event(models.Model):
     place_name = models.CharField(max_length=255)
     city = models.CharField(max_length=255)
     full_address = models.TextField()
+    total_sold = models.IntegerField(default=0)
+    total_sales = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     location = models.TextField()
     category = models.CharField(max_length=255, choices=CATEGORY_CHOICES)
     status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='pending')
@@ -63,7 +65,13 @@ class Event(models.Model):
     @property
     def image_url(self):
         return '{}{}'.format(settings.CLOUDINARY_ROOT_URL, self.image)
-
+    def get_short_description(self):
+        return {
+            'title':self.title,
+            'status':self.end_date < datetime.now().date(),
+            'total_sales':self.total_sales,
+            'total_sold':self.total_sold,
+        }
 
 class Ticket(models.Model):
     TICKET_TYPE_CHOICES = (

@@ -17,7 +17,7 @@ class CustomerEventRetreiveView(generics.RetrieveAPIView):
     serializer_class = CustomerDetailEventSerializers
     lookup_field = 'id'
     authentication_classes = [authentication.TokenAuthentication, authentication.SessionAuthentication]
-    permission_classes = [custom_permissions.IsAdminOrEventOrganizers]
+    permission_classes = [permissions.AllowAny]
 
 
 @extend_schema_view(get=extend_schema(parameters=[OpenApiParameter(name='category', description='Category Name', type=str)]))
@@ -33,7 +33,7 @@ class CustomerEventListView(generics.ListAPIView):
             if queryset.exists():
                 return queryset
             return []
-        return self.queryset.filter(status='approved')
+        return self.queryset.filter(status='approved',end_date__gte=datetime.now().date())
     
 class CustomerUpcomingEventListView(generics.ListAPIView):
     serializer_class = CustomerListEventSerializers
@@ -89,12 +89,15 @@ class EventUpdateView(generics.UpdateAPIView):
     permission_classes = [custom_permissions.IsAdminOrOwner]
     lookup_field = 'id'
 
-# class EventSalesDataView(generics.RetrieveAPIView):
-#     serializer_class = EventSalesDataSerializers
-#     authentication_classes = [JWTAuthentication, authentication.TokenAuthentication, authentication.SessionAuthentication]
-#     permission_classes = [custom_permissions.IsAdminOrEventOrganizers]
-#     def get_queryset(self):
-#         return models.SalesData.objects.filter()
+class EventSalesDataView(generics.RetrieveAPIView):
+    queryset = models.SalesData.objects.all()
+    serializer_class = EventSalesDataSerializers
+    authentication_classes = [JWTAuthentication, authentication.TokenAuthentication, authentication.SessionAuthentication]
+    permission_classes = [custom_permissions.IsAdminOrEventOrganizers]
+    def get_queryset(self):
+        return self.queryset.filter(organizer=self.request.user.id).first()
+    def get_object(self):
+        return self.get_queryset()
 
 
 class EventListOwnerView(generics.ListAPIView):
