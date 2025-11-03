@@ -39,9 +39,16 @@
 - 🎟️ **Ticket System** - Multiple ticket types (Free, Paid, Volunteer) with quantity management
 - 💰 **Sales & Analytics** - Track sales data and analytics for event organizers
 - 📧 **Email Notifications** - Automated email confirmations for ticket purchases
-- 📸 **Image Upload** - Cloudinary integration for event and profile images
-- 🔍 **Event Discovery** - Browse events by category with filtering capabilities
+- 📸 **Image Upload** - SeaweedFS integration for event and profile images
+- 🔍 **Event Discovery** - Advanced filtering, searching, and sorting capabilities
 - 📊 **Admin Dashboard** - Complete admin interface for managing users and approving proposals
+- 🔄 **Refund System** - Full refund processing with balance updates and email notifications
+- 📱 **QR Code Generation** - Automatic QR code generation for tickets
+- 🐳 **Docker Support** - Complete Docker setup for development and production
+- 🔄 **CI/CD Pipeline** - Automated testing and deployment with GitHub Actions
+- 🏥 **Health Monitoring** - Health check endpoint for load balancers and monitoring tools
+- 🔒 **Rate Limiting** - Built-in rate limiting to prevent abuse
+- 📝 **Code Quality** - Pre-commit hooks and code formatting tools
 
 ## 🛠 Tech Stack
 
@@ -49,18 +56,53 @@
 - **API Framework**: Django REST Framework 3.14+
 - **Authentication**: JWT (djangorestframework-simplejwt)
 - **Database**: PostgreSQL (via psycopg2-binary)
-- **File Storage**: Cloudinary
+- **File Storage**: SeaweedFS (distributed file system)
 - **API Documentation**: drf-spectacular (OpenAPI/Swagger)
-- **Other**: django-cors-headers, django-environ, gunicorn, whitenoise
+- **Filtering**: django-filter for advanced filtering capabilities
+- **QR Codes**: qrcode[pil] for ticket QR code generation
+- **Deployment**: Docker, Docker Compose, Gunicorn
+- **CI/CD**: GitHub Actions
+- **Code Quality**: Black, isort, flake8, mypy
+- **Other**: django-cors-headers, django-environ, whitenoise
 
 ## 📦 Prerequisites
 
-- Python 3.8 or higher
+### For Local Development
+- Python 3.10 or higher
 - PostgreSQL database
-- Cloudinary account (for image storage)
+- SeaweedFS server (for file storage) - [Installation Guide](https://github.com/seaweedfs/seaweedfs)
 - SMTP email server credentials (for email notifications)
 
+### For Docker Development
+- Docker and Docker Compose
+- All prerequisites are handled automatically (including SeaweedFS)
+
 ## 🚀 Installation
+
+### Option 1: Docker (Recommended)
+
+<details>
+<summary><b>🐳 Quick Start with Docker</b></summary>
+
+```bash
+# Clone the repository
+git clone <repository-url>
+cd setiket-backend-compfest
+
+# Start services (development) - includes SeaweedFS
+docker-compose -f docker-compose.dev.yml up --build
+
+# Or for production-like setup
+docker-compose up --build
+```
+
+The API will be available at `http://localhost:8000/api/`
+
+**Note:** SeaweedFS is automatically started with Docker Compose for file storage.
+
+</details>
+
+### Option 2: Local Development
 
 <details>
 <summary><b>1. Clone the Repository</b></summary>
@@ -91,8 +133,7 @@ source venv/bin/activate
 <summary><b>3. Install Dependencies</b></summary>
 
 ```bash
-cd backend
-pip install -r ../requirements.txt
+pip install -r requirements.txt
 ```
 
 </details>
@@ -101,17 +142,39 @@ pip install -r ../requirements.txt
 <summary><b>4. Database Setup</b></summary>
 
 ```bash
-# Run migrations
+cd backend
 python manage.py migrate
-
-# Create superuser (optional)
 python manage.py createsuperuser
 ```
 
 </details>
 
 <details>
-<summary><b>5. Run Development Server</b></summary>
+<summary><b>5. Start SeaweedFS (Local Development)</b></summary>
+
+For local development without Docker, you need to install and run SeaweedFS:
+
+```bash
+# Download SeaweedFS (example for Linux)
+wget https://github.com/seaweedfs/seaweedfs/releases/latest/download/linux_amd64.tar.gz
+tar -xzf linux_amd64.tar.gz
+
+# Start SeaweedFS master
+./weed master -ip=localhost -port=9333
+
+# In another terminal, start volume server
+./weed volume -dir=/tmp/seaweedfs -max=0 -mserver=localhost:9333 -port=8080
+
+# In another terminal, start filer
+./weed filer -master=localhost:9333 -port=8888
+```
+
+**Note:** With Docker, SeaweedFS is automatically started and configured.
+
+</details>
+
+<details>
+<summary><b>6. Run Development Server</b></summary>
 
 ```bash
 python manage.py runserver
@@ -143,11 +206,15 @@ EMAIL_HOST_USER=your-email@gmail.com
 EMAIL_HOST_SENDER=noreply@setiket.com
 EMAIL_HOST_PASSWORD=your-app-password
 
-# Cloudinary (if not hardcoded in settings)
-CLOUDINARY_NAME=your-cloudinary-name
-CLOUDINARY_API_KEY=your-api-key
-CLOUDINARY_API_SECRET=your-api-secret
-```
+# SeaweedFS (File Storage)
+# For local development without Docker, install SeaweedFS separately
+SEAWEEDFS_URL=http://localhost:8333
+SEAWEEDFS_FILER_URL=http://localhost:8888
+SEAWEEDFS_MASTER_URL=http://localhost:9333
+
+# CORS (comma-separated list)
+
+**Note:** For Docker, environment variables can be set in `.env` file or in `docker-compose.yml`.
 
 </details>
 
@@ -156,8 +223,10 @@ CLOUDINARY_API_SECRET=your-api-secret
 ### Base URL
 
 ```
-http://localhost:8000/api
+http://localhost:8000/api/v1
 ```
+
+**Note:** The API is versioned. Both `/api/` and `/api/v1/` are supported for backward compatibility.
 
 ### Authentication
 
@@ -281,15 +350,22 @@ Authorization: Bearer <access_token>
 
 ### List Events
 
-Retrieve all approved events (optionally filtered by category).
+Retrieve all approved events with advanced filtering, searching, and sorting.
 
 ```http
-GET /api/event/?category=seminar
+GET /api/v1/event/?category=seminar&city=Jakarta&min_price=50000&ordering=-start_date&search=tech
 Authorization: Bearer <access_token>
 ```
 
 **Query Parameters:**
 - `category` (optional): Filter by category (`seminar`, `konser`, `horror`, `komedi`, `olahraga`)
+- `city` (optional): Filter by city (partial match)
+- `start_date_from` (optional): Filter events starting from this date (YYYY-MM-DD)
+- `start_date_to` (optional): Filter events starting until this date (YYYY-MM-DD)
+- `min_price` (optional): Minimum ticket price
+- `max_price` (optional): Maximum ticket price
+- `search` (optional): Search in title, description, city, place_name
+- `ordering` (optional): Sort by field (e.g., `start_date`, `-created_at`, `city,-start_date`)
 
 **Response:**
 ```json
@@ -381,7 +457,7 @@ Authorization: Bearer <access_token>
 ### Purchase Ticket
 
 ```http
-POST /api/ticket/purchase/
+POST /api/v1/ticket/purchase/
 Authorization: Bearer <access_token>
 Content-Type: application/json
 
@@ -407,7 +483,68 @@ Content-Type: application/json
 }
 ```
 
-**Note:** An email confirmation will be sent to the user's email address.
+**Note:** 
+- An email confirmation will be sent to the user's email address
+- A QR code is automatically generated and stored with the ticket
+
+</details>
+
+<details>
+<summary><b>🔄 Refund Ticket</b></summary>
+
+### Refund Ticket
+
+Refund a purchased ticket. Only the ticket owner can request a refund.
+
+```http
+DELETE /api/v1/ticket/{id}/refund/
+Authorization: Bearer <access_token>
+Content-Type: application/json
+
+{
+  "reason": "Event cancelled"  // Optional
+}
+```
+
+**Response:**
+```json
+{
+  "message": "Ticket refunded successfully. The amount has been added to your balance."
+}
+```
+
+**Note:** 
+- Cannot refund tickets for past events
+- Refund amount is added back to user balance
+- Ticket quantity is restored
+- Email confirmation is sent
+
+</details>
+
+<details>
+<summary><b>📱 Get Ticket QR Code</b></summary>
+
+### Get Ticket QR Code
+
+Retrieve the QR code for a purchased ticket.
+
+```http
+GET /api/v1/ticket/{id}/qr/
+Authorization: Bearer <access_token>
+```
+
+**Response:**
+```json
+{
+  "qr_code": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA...",
+  "qr_code_string": "SETIKET-{ticket-id}",
+  "ticket_id": "uuid",
+  "event": "Tech Conference 2024",
+  "ticket": "VIP Ticket"
+}
+```
+
+**Note:** QR code is automatically generated when ticket is purchased.
 
 </details>
 
@@ -947,7 +1084,7 @@ Content-Type: application/json
 | `password` | String | Hashed password |
 | `balance` | Integer | User balance (default: 1,000,000) |
 | `phone_number` | String | Phone number (optional) |
-| `image` | CloudinaryField | Profile image (optional) |
+| `image` | ImageField | Profile image (optional, stored in SeaweedFS) |
 | `role` | String | User role: `customer`, `event_organizer`, `administrator` |
 | `created_at` | DateTime | Account creation timestamp |
 
@@ -962,7 +1099,7 @@ Content-Type: application/json
 |-------|------|-------------|
 | `id` | UUID | Primary key |
 | `title` | String | Event title |
-| `image` | CloudinaryField | Event banner image |
+| `image` | ImageField | Event banner image (stored in SeaweedFS) |
 | `description` | Text | Event description |
 | `start_date` | Date | Event start date |
 | `end_date` | Date | Event end date |
@@ -1018,7 +1155,9 @@ Content-Type: application/json
 | `event` | ForeignKey | Reference to Event |
 | `price` | Decimal | Purchase price |
 | `sales_data` | ForeignKey | Reference to SalesData |
+| `qr_code` | String | QR code string for ticket verification |
 | `created_at` | DateTime | Purchase timestamp |
+| `updated_at` | DateTime | Last update timestamp |
 
 </details>
 
@@ -1035,8 +1174,8 @@ Content-Type: application/json
 | `category` | String | Category of events |
 | `description` | Text | Proposal description |
 | `location` | Text | Location |
-| `banner` | CloudinaryField | Banner image |
-| `proposal` | CloudinaryField | Proposal document/image |
+| `banner` | ImageField | Banner image (stored in SeaweedFS) |
+| `proposal` | FileField | Proposal document/image (stored in SeaweedFS) |
 | `status` | String | Status: `pending`, `approved`, `rejected` |
 | `message` | Text | Admin message |
 | `created_at` | DateTime | Submission timestamp |
@@ -1128,19 +1267,24 @@ The API uses standard HTTP status codes:
 
 ## 🔒 Rate Limiting
 
-Currently, rate limiting is not implemented. Consider implementing rate limiting for production using:
-- Django REST Framework throttling classes
-- Django-ratelimit
-- API Gateway solutions
+Rate limiting is implemented using Django REST Framework throttling:
+
+- **Anonymous users**: 100 requests per hour
+- **Authenticated users**: 1000 requests per hour
+
+Rate limits can be customized in `backend/backend/settings.py`.
 
 ---
 
-## 📖 Swagger Documentation
+## 📖 API Documentation
+
+### Swagger/OpenAPI Documentation
 
 Interactive API documentation is available at:
 
 ```
-http://localhost:8000/apidocs/
+http://localhost:8000/api/docs/
+http://localhost:8000/apidocs/  (legacy)
 ```
 
 API schema (OpenAPI 3.0) is available at:
@@ -1149,9 +1293,125 @@ API schema (OpenAPI 3.0) is available at:
 http://localhost:8000/api/schema/
 ```
 
+## 🏥 Health Check
+
+The API includes a health check endpoint for monitoring:
+
+```http
+GET /api/v1/health/
+```
+
+**Response:**
+```json
+{
+  "status": "healthy",
+  "database": "connected",
+  "version": "1.0.0"
+}
+```
+
+Returns HTTP 200 if healthy, HTTP 503 if unhealthy.
+
 ---
 
 ## 🚀 Deployment
+
+<details>
+<summary><b>🐳 Docker Deployment (Recommended)</b></summary>
+
+### Docker Deployment
+
+```bash
+# Production deployment
+docker-compose -f docker-compose.prod.yml up --build -d
+
+# Run migrations
+docker-compose -f docker-compose.prod.yml exec web python manage.py migrate
+
+# Collect static files
+docker-compose -f docker-compose.prod.yml exec web python manage.py collectstatic --noinput
+```
+
+</details>
+
+<details>
+<summary><b>🐳 Detailed Docker Guide</b></summary>
+
+### Docker Compose Files
+
+- `docker-compose.yml` - Default (production-like)
+- `docker-compose.dev.yml` - Development (with hot reload)
+- `docker-compose.prod.yml` - Production optimized
+
+### Building Docker Image
+
+```bash
+docker build -t setiket-backend .
+```
+
+### Running Migrations
+
+```bash
+# Development
+docker-compose -f docker-compose.dev.yml exec web python manage.py migrate
+
+# Production
+docker-compose -f docker-compose.prod.yml exec web python manage.py migrate
+```
+
+### Collecting Static Files
+
+```bash
+docker-compose exec web python manage.py collectstatic --noinput
+```
+
+### Docker Volumes
+
+- `postgres_data` - PostgreSQL database data
+- `static_volume` - Static files
+- `media_volume` - Media files
+- `logs_volume` - Application logs
+- `seaweedfs_data` - SeaweedFS file storage data
+
+### Troubleshooting
+
+**Database Connection Issues:**
+```bash
+# Check if database is ready
+docker-compose ps
+
+# View database logs
+docker-compose logs db
+
+# Access database shell
+docker-compose exec db psql -U setiket_user -d setiket_db
+```
+
+**SeaweedFS Connection Issues:**
+```bash
+# Check SeaweedFS status
+docker-compose logs seaweedfs
+
+# Check SeaweedFS master status
+curl http://localhost:9333/dir/status
+
+# Check SeaweedFS filer status
+curl http://localhost:8888/status
+```
+
+**Container Issues:**
+```bash
+# View logs
+docker-compose logs web
+
+# Restart services
+docker-compose restart
+
+# Rebuild containers
+docker-compose up --build
+```
+
+</details>
 
 <details>
 <summary><b>✅ Production Checklist</b></summary>
@@ -1164,6 +1424,7 @@ http://localhost:8000/api/schema/
    - Configure `ALLOWED_HOSTS`
    - Set up production database
    - Configure email settings
+   - Set `CORS_ALLOWED_ORIGINS` for production domains
 
 2. **Static Files**
    ```bash
@@ -1178,8 +1439,12 @@ http://localhost:8000/api/schema/
 4. **Run with Gunicorn**
    ```bash
    cd backend
-   gunicorn backend.asgi:application -k uvicorn.workers.UvicornWorker
+   gunicorn backend.wsgi:application --bind 0.0.0.0:8000 --workers 4
    ```
+
+5. **Health Check**
+   - Verify health endpoint: `GET /api/v1/health/`
+   - Set up monitoring tools
 
 </details>
 
@@ -1193,11 +1458,177 @@ SECRET_KEY=your-production-secret-key
 DEBUG=False
 ALLOWED_HOSTS=yourdomain.com,www.yourdomain.com
 DATABASE_URL=postgresql://user:password@host:5432/dbname
+
+# SeaweedFS (File Storage)
+SEAWEEDFS_URL=http://seaweedfs:8333
+SEAWEEDFS_FILER_URL=http://seaweedfs:8888
+SEAWEEDFS_MASTER_URL=http://seaweedfs:9333
+
+# Email
 EMAIL_HOST=smtp.your-provider.com
 EMAIL_HOST_USER=your-email@domain.com
 EMAIL_HOST_SENDER=noreply@yourdomain.com
 EMAIL_HOST_PASSWORD=your-email-password
+
+# CORS
+CORS_ALLOWED_ORIGINS=https://your-frontend.com,https://www.your-frontend.com
 ```
+
+</details>
+
+<details>
+<summary><b>🔄 CI/CD Pipeline</b></summary>
+
+### CI/CD with GitHub Actions
+
+The project includes a GitHub Actions workflow (`.github/workflows/ci.yml`) that:
+- Runs tests on push/PR
+- Performs code quality checks (Black, isort, flake8)
+- Builds Docker images
+- Can deploy to production (configure deployment steps)
+
+To set up CI/CD:
+1. Add `DOCKER_USERNAME` and `DOCKER_PASSWORD` to GitHub Secrets
+2. Configure deployment steps in the workflow file
+
+</details>
+
+---
+
+## 🏗️ Architecture
+
+<details>
+<summary><b>📐 System Architecture Overview</b></summary>
+
+### Project Structure
+
+```
+backend/
+├── api/                    # Main application
+│   ├── models.py          # Database models
+│   ├── views.py           # API views
+│   ├── serializers.py     # DRF serializers
+│   ├── urls.py            # URL routing
+│   ├── permissions.py     # Custom permissions
+│   ├── filters.py         # Filter sets
+│   ├── services.py       # Business logic layer
+│   ├── storage.py        # SeaweedFS storage backend
+│   ├── health.py         # Health check endpoint
+│   ├── qr_code.py        # QR code generation
+│   ├── qr_code_views.py  # QR code endpoints
+│   └── refund_views.py    # Refund endpoints
+├── backend/               # Django project settings
+│   ├── settings.py        # Django settings
+│   ├── urls.py            # Root URL config
+│   ├── wsgi.py            # WSGI config
+│   └── asgi.py            # ASGI config
+└── manage.py              # Django management script
+```
+
+### Key Components
+
+**Models:**
+1. **User** - Custom user model with roles (customer, event_organizer, administrator)
+2. **Event** - Event information with approval workflow
+3. **Ticket** - Ticket types and pricing
+4. **UserTicket** - Purchased tickets with QR codes
+5. **EventOrganizerProposal** - Proposal system for becoming an organizer
+6. **SalesData** - Sales statistics per event
+
+**Services Layer:**
+- **TicketPurchaseService** - Handles ticket purchases atomically
+- **RefundService** - Handles ticket refunds
+- **QRCodeService** - Generates QR codes for tickets
+
+**Security Features:**
+1. JWT Authentication - Token-based authentication
+2. Role-Based Access Control - Custom permissions
+3. CORS Configuration - Restricted origins
+4. Rate Limiting - DRF throttling
+5. Password Validation - Django password validators
+6. SQL Injection Protection - Django ORM
+
+**Database Optimizations:**
+1. Indexes - On frequently queried fields
+2. Composite Indexes - For common query patterns
+3. select_related - For foreign key relationships
+4. prefetch_related - For reverse foreign keys
+
+</details>
+
+<details>
+<summary><b>🔄 CI/CD Pipeline Details</b></summary>
+
+### GitHub Actions Workflow
+
+The project includes a GitHub Actions workflow (`.github/workflows/ci.yml`) that:
+
+**Testing:**
+- Runs tests on push/PR
+- PostgreSQL service for testing
+- Automated migrations
+
+**Code Quality:**
+- Black formatting check
+- isort import sorting check
+- flake8 linting check
+
+**Build & Deploy:**
+- Docker image building
+- Docker image pushing to registry
+- Deployment ready (configure deployment steps)
+
+**Setup Requirements:**
+1. Add `DOCKER_USERNAME` and `DOCKER_PASSWORD` to GitHub Secrets
+2. Configure deployment steps in the workflow file
+
+</details>
+
+<details>
+<summary><b>📊 Recent Improvements Summary</b></summary>
+
+### Completed Implementations
+
+**1. DevOps (Docker, CI/CD) ✅**
+- Production-ready Dockerfile
+- Docker Compose files (dev, prod, default)
+- GitHub Actions CI/CD pipeline
+- Automated testing and code quality checks
+
+**2. Features ✅**
+- **Refund System**: Atomic refund processing with balance updates
+- **QR Code Generation**: Automatic QR codes for tickets
+- **Payment Integration**: Ready for gateway integration (Midtrans, Xendit, Stripe)
+
+**3. Monitoring ✅**
+- Health check endpoint (`/api/v1/health/`)
+- Structured logging configured
+- Error tracking ready (can integrate Sentry)
+
+**4. Code Maintenance ✅**
+- Black code formatting
+- isort import sorting
+- flake8 linting
+- Pre-commit hooks configured
+- mypy type checking (optional)
+
+**5. Database Optimizations ✅**
+- Indexes on frequently queried fields
+- Composite indexes for common queries
+- N+1 query optimizations
+- Efficient aggregations
+
+**6. Security Enhancements ✅**
+- Rate limiting (100/hour anonymous, 1000/hour authenticated)
+- CORS restricted to specific origins
+- Password validation
+- JWT-only authentication in production
+
+**7. API Improvements ✅**
+- Advanced filtering, searching, sorting
+- API versioning (v1)
+- Pagination (20 items per page)
+- Comprehensive error handling
 
 </details>
 
@@ -1205,10 +1636,40 @@ EMAIL_HOST_PASSWORD=your-email-password
 
 ## 🧪 Testing
 
-Test files are located in `backend/api/tests.py`. Run tests with:
+### Running Tests
 
 ```bash
+# Local testing
+cd backend
 python manage.py test
+
+# Docker testing
+docker-compose exec web python manage.py test
+```
+
+### Code Quality Checks
+
+```bash
+# Format code
+black backend/
+
+# Sort imports
+isort backend/
+
+# Lint
+flake8 backend/
+
+# Type check (optional)
+mypy backend/
+```
+
+### Pre-commit Hooks
+
+Install pre-commit hooks for automatic code quality checks:
+
+```bash
+pip install pre-commit
+pre-commit install
 ```
 
 ### Example Test Scripts
@@ -1264,35 +1725,39 @@ Test scripts are available in the `apitesting/` directory for manual API testing
 
 | Method | Endpoint | Auth | Role | Description |
 |--------|----------|------|------|-------------|
-| POST | `/api/auth/register/` | No | - | Register new user |
-| POST | `/api/auth/login/` | No | - | Login and get tokens |
-| POST | `/api/auth/refresh/` | No | - | Refresh access token |
-| POST | `/api/auth/logout/` | Yes | Any | Logout user |
-| GET | `/api/event/` | Yes | Customer/Admin | List events |
-| GET | `/api/event/{id}/` | Optional | - | Get event details |
-| GET | `/api/event/upcoming/` | Yes | Customer/Admin | Get upcoming events |
-| POST | `/api/ticket/purchase/` | Yes | Customer/Admin | Purchase ticket |
-| GET | `/api/account/` | Yes | Any | Get own account |
-| PATCH | `/api/account/` | Yes | Any | Update own account |
-| POST | `/api/event-organizer/event/create/` | Yes | Organizer/Admin | Create event |
-| PATCH | `/api/event-organizer/event/update/{id}/` | Yes | Owner/Admin | Update event |
-| GET | `/api/event-organizer/ownevent/` | Yes | Organizer/Admin | List own events |
-| GET | `/api/event-organizer/sales-data/` | Yes | Organizer/Admin | Get sales data |
-| GET | `/api/event-users/{id}/` | Yes | Organizer/Admin | Get registered users |
-| POST | `/api/ticket/create/` | Yes | Organizer/Admin | Create ticket |
-| POST | `/api/event-organizer-proposal/create/` | Yes | Any | Create organizer proposal |
-| GET | `/api/event-organizer-proposal/` | Yes | Organizer/Admin | List own proposals |
-| GET | `/api/event-organizer-proposal/{id}/` | Yes | Organizer/Admin | Get proposal details |
-| GET | `/api/admin/user-list/` | Yes | Admin | List all users |
-| GET | `/api/admin/event-organizers-list/` | Yes | Admin | List organizers |
-| GET | `/api/admin/event-organizers/{id}/events/` | Yes | Admin | Get organizer events |
-| GET | `/api/admin/event-proposals/` | Yes | Admin | List event proposals |
-| GET | `/api/admin/event-proposals/{id}/` | Yes | Admin | Get event proposal |
-| PATCH | `/api/admin/event-proposals/{id}/confirm/` | Yes | Admin | Approve/reject event |
-| GET | `/api/admin/event-organizer-proposals/` | Yes | Admin | List organizer proposals |
-| GET | `/api/admin/event-organizer-proposals/{id}/` | Yes | Admin | Get organizer proposal |
-| PATCH | `/api/admin/event-organizer-proposals/{id}/confirm/` | Yes | Admin | Approve/reject proposal |
-| PATCH | `/api/account/{id}/` | Yes | Admin | Update user account |
+| POST | `/api/v1/auth/register/` | No | - | Register new user |
+| POST | `/api/v1/auth/login/` | No | - | Login and get tokens |
+| POST | `/api/v1/auth/refresh/` | No | - | Refresh access token |
+| POST | `/api/v1/auth/logout/` | Yes | Any | Logout user |
+| GET | `/api/v1/event/` | Yes | Customer/Admin | List events |
+| GET | `/api/v1/event/{id}/` | Optional | - | Get event details |
+| GET | `/api/v1/event/upcoming/` | Yes | Customer/Admin | Get upcoming events |
+| POST | `/api/v1/ticket/purchase/` | Yes | Customer/Admin | Purchase ticket |
+| DELETE | `/api/v1/ticket/{id}/refund/` | Yes | Owner | Refund ticket |
+| GET | `/api/v1/ticket/{id}/qr/` | Yes | Owner | Get ticket QR code |
+| GET | `/api/v1/health/` | No | - | Health check |
+| GET | `/api/v1/account/` | Yes | Any | Get own account |
+| PATCH | `/api/v1/account/` | Yes | Any | Update own account |
+| POST | `/api/v1/event-organizer/event/create/` | Yes | Organizer/Admin | Create event |
+| PATCH | `/api/v1/event-organizer/event/update/{id}/` | Yes | Owner/Admin | Update event |
+| GET | `/api/v1/event-organizer/ownevent/` | Yes | Organizer/Admin | List own events |
+| GET | `/api/v1/event-organizer/sales-data/` | Yes | Organizer/Admin | Get sales data |
+| GET | `/api/v1/event-users/{id}/` | Yes | Organizer/Admin | Get registered users |
+| POST | `/api/v1/ticket/create/` | Yes | Organizer/Admin | Create ticket |
+| POST | `/api/v1/event-organizer-proposal/create/` | Yes | Any | Create organizer proposal |
+| GET | `/api/v1/event-organizer-proposal/` | Yes | Organizer/Admin | List own proposals |
+| GET | `/api/v1/event-organizer-proposal/{id}/` | Yes | Organizer/Admin | Get proposal details |
+| GET | `/api/v1/admin/user-list/` | Yes | Admin | List all users |
+| GET | `/api/v1/admin/event-organizers-list/` | Yes | Admin | List organizers |
+| GET | `/api/v1/admin/event-organizers/{id}/events/` | Yes | Admin | Get organizer events |
+| GET | `/api/v1/admin/event-proposals/` | Yes | Admin | List event proposals |
+| GET | `/api/v1/admin/event-proposals/{id}/` | Yes | Admin | Get event proposal |
+| PATCH | `/api/v1/admin/event-proposals/{id}/confirm/` | Yes | Admin | Approve/reject event |
+| GET | `/api/v1/admin/event-organizer-proposals/` | Yes | Admin | List organizer proposals |
+| GET | `/api/v1/admin/event-organizer-proposals/{id}/` | Yes | Admin | Get organizer proposal |
+| PATCH | `/api/v1/admin/event-organizer-proposals/{id}/confirm/` | Yes | Admin | Approve/reject proposal |
+| DELETE | `/api/v1/admin/ticket/{id}/refund/` | Yes | Admin | Admin refund ticket |
+| PATCH | `/api/v1/account/{id}/` | Yes | Admin | Update user account |
 
 </details>
 
@@ -1312,6 +1777,8 @@ Test scripts are available in the `apitesting/` directory for manual API testing
 - Use Django REST Framework conventions
 - Write docstrings for functions and classes
 - Add comments for complex logic
+- Code is automatically formatted with Black and isort
+- Pre-commit hooks ensure code quality
 
 ---
 
@@ -1329,4 +1796,22 @@ This project is licensed under the MIT License - see the LICENSE file for detail
   - Ticket system
   - Admin dashboard
   - Email notifications
+
+- **v1.1.0** - Major improvements
+  - ✨ Refund system with atomic transactions
+  - 📱 QR code generation for tickets
+  - 🐳 Docker support (development and production)
+  - 🔄 CI/CD pipeline with GitHub Actions
+  - 🏥 Health check endpoint
+  - 🔍 Advanced filtering, searching, and sorting
+  - 📊 Database optimizations (indexes, query optimization)
+  - 🔒 Enhanced security (rate limiting, CORS configuration)
+  - 📝 Code quality tools (Black, isort, flake8, pre-commit hooks)
+  - 📚 Comprehensive documentation
+
+- **v1.2.0** - File Storage Migration
+  - 🗄️ **SeaweedFS Integration** - Replaced Cloudinary with SeaweedFS for distributed file storage
+  - 🐳 SeaweedFS service added to Docker Compose
+  - 📦 Custom SeaweedFS storage backend implementation
+  - 🔧 Updated all file upload fields to use SeaweedFS
 
