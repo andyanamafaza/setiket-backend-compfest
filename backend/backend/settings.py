@@ -12,7 +12,6 @@ https://docs.djangoproject.com/en/4.0/ref/settings/
 
 from pathlib import Path
 from datetime import timedelta
-from cloudinary import config as cloudinary_config
 from os.path import join as os_path_join
 from dj_database_url import parse as dj_database_url_parse
 import environ
@@ -55,8 +54,8 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',
+    'django_filters',
     'api',
-    'cloudinary'
 ]
 
 AUTH_USER_MODEL = 'api.User'
@@ -65,10 +64,31 @@ REST_FRAMEWORK = {
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ],
+    # SECURITY: Only enable BasicAuth and SessionAuth in development
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle',
+        'rest_framework.throttling.UserRateThrottle'
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '100/hour',  # 100 requests per hour for anonymous users
+        'user': '1000/hour',  # 1000 requests per hour for authenticated users
+    },
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 20,
+    'DEFAULT_FILTER_BACKENDS': [
+        'django_filters.rest_framework.DjangoFilterBackend',
+        'rest_framework.filters.SearchFilter',
+        'rest_framework.filters.OrderingFilter',
+    ],
+}
+
+# Add BasicAuth and SessionAuth only in development/debug mode
+if DEBUG:
+    REST_FRAMEWORK['DEFAULT_AUTHENTICATION_CLASSES'].extend([
         'rest_framework.authentication.BasicAuthentication',
         'rest_framework.authentication.SessionAuthentication',
-    ]
-}
+    ])
 
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME':timedelta(minutes=30),
@@ -79,13 +99,10 @@ SIMPLE_JWT = {
     'SIGNING_KEY':SECRET_KEY,
 }
 
-CLOUDINARY_ROOT_URL = 'https://res.cloudinary.com/setiket/image/upload/'
-
-cloudinary_config( 
-  cloud_name = "setiket", 
-  api_key = "451252258413125", 
-  api_secret = "v1dbBdgc4_XYJ6BaE4QqrzhZdZ0" 
-)
+# SeaweedFS Configuration
+SEAWEEDFS_URL = env('SEAWEEDFS_URL', default='http://localhost:8333')
+SEAWEEDFS_FILER_URL = env('SEAWEEDFS_FILER_URL', default='http://localhost:8888')
+SEAWEEDFS_MASTER_URL = env('SEAWEEDFS_MASTER_URL', default='http://localhost:9333')
 
 SPECTACULAR_SETTINGS = {
     'TITLE': 'Setiket API',
@@ -109,7 +126,41 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-CORS_ORIGIN_ALLOW_ALL = True
+# SECURITY: CORS Configuration - Only allow specific origins
+CORS_ORIGIN_ALLOW_ALL = False  # Changed from True for security
+
+# Allowed origins should be set via environment variable
+CORS_ALLOWED_ORIGINS = env.list('CORS_ALLOWED_ORIGINS', default=[
+    'http://localhost:3000',
+    'http://localhost:8000',
+    'http://127.0.0.1:3000',
+    'http://127.0.0.1:8000',
+])
+
+# Allow credentials (cookies, authorization headers) to be sent
+CORS_ALLOW_CREDENTIALS = True
+
+# Additional CORS settings for security
+CORS_ALLOW_METHODS = [
+    'DELETE',
+    'GET',
+    'OPTIONS',
+    'PATCH',
+    'POST',
+    'PUT',
+]
+
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+]
 
 ROOT_URLCONF = 'backend.urls'
 
@@ -195,5 +246,50 @@ EMAIL_USE_SSL = False
 EMAIL_HOST_USER = env('EMAIL_HOST_USER')
 EMAIL_HOST_SENDER = env('EMAIL_HOST_SENDER')
 EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD')
+
+# Logging Configuration
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'file': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': BASE_DIR / 'logs' / 'django.log',
+            'formatter': 'verbose',
+        },
+        'console': {
+            'level': 'DEBUG' if DEBUG else 'INFO',
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+    },
+    'root': {
+        'handlers': ['console', 'file'],
+        'level': 'INFO',
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console', 'file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'api': {
+            'handlers': ['console', 'file'],
+            'level': 'DEBUG' if DEBUG else 'INFO',
+            'propagate': False,
+        },
+    },
+}
+
+# Create logs directory if it doesn't exist
+import os
+os.makedirs(BASE_DIR / 'logs', exist_ok=True)
 
 # run with cd backend && gunicorn backend.asgi:application -k uvicorn.workers.UvicornWorker
