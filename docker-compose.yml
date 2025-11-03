@@ -1,0 +1,77 @@
+version: '3.8'
+
+services:
+  seaweedfs:
+    image: chrislusf/seaweedfs:latest
+    ports:
+      - "8333:8333"  # Master server
+      - "8888:8888"  # Filer server
+      - "9333:9333"  # Master admin
+      - "8080:8080"  # Volume server
+    volumes:
+      - seaweedfs_data:/data
+    command: >
+      /bin/sh -c "
+      weed master -ip=0.0.0.0 -port=9333 -defaultReplication=000 &
+      sleep 2 &&
+      weed volume -dir=/data -max=0 -mserver=localhost:9333 -port=8080 &
+      sleep 1 &&
+      weed filer -master=localhost:9333 -port=8888
+      "
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9333/dir/status"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  db:
+    image: postgres:14-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: setiket_db
+      POSTGRES_USER: setiket_user
+      POSTGRES_PASSWORD: setiket_password
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U setiket_user"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  web:
+    build: .
+    command: gunicorn backend.wsgi:application --bind 0.0.0.0:8000 --workers 4 --timeout 120
+    volumes:
+      - ./backend:/app
+      - static_volume:/app/staticfiles
+      - media_volume:/app/media
+      - logs_volume:/app/logs
+    ports:
+      - "8000:8000"
+    env_file:
+      - backend/.env
+    depends_on:
+      db:
+        condition: service_healthy
+      seaweedfs:
+        condition: service_healthy
+    environment:
+      - DATABASE_URL=postgresql://setiket_user:setiket_password@db:5432/setiket_db
+      - SEAWEEDFS_URL=http://seaweedfs:8333
+      - SEAWEEDFS_FILER_URL=http://seaweedfs:8888
+      - SEAWEEDFS_MASTER_URL=http://seaweedfs:9333
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  postgres_data:
+  static_volume:
+  media_volume:
+  logs_volume:
+  seaweedfs_data:
+
