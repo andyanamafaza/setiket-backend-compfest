@@ -1,0 +1,38 @@
+# Python code formatter configuration
+[tool.black]
+line-length = 120
+target-version = ['py310']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | venv
+  | migrations
+  | staticfiles
+  | static
+  | media
+)/
+'''
+
+[tool.isort]
+profile = "black"
+line_length = 120
+skip = ["migrations", "venv", ".venv"]
+
+[flake8]
+max-line-length = 120
+exclude = migrations,venv,.venv,staticfiles,static,media
+ignore = E203, E266, E501, W503
+
+[mypy]
+python_version = "3.10"
+warn_return_any = True
+warn_unused_configs = True
+disallow_untyped_defs = False
+
