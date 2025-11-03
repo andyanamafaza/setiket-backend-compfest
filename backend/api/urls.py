@@ -3,9 +3,42 @@ from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
 )
-from .views import *
+from .health import health_check
+from .views import (
+    RegisterUserView,
+    LogoutView,
+    CustomerEventRetrieveView,
+    CustomerEventListView,
+    CustomerUpcomingEventListView,
+    TicketCreateView,
+    TicketPurchaseView,
+    AccountView,
+    AccountDetailView,
+    EventListOwnerView,
+    EventCreateView,
+    EventUpdateView,
+    EventSalesDataView,
+    EventUserListView,
+    EventOrganizerProposalCreateView,
+    EventOrganizerProposalListView,
+    EventOrganizerProposalDetailView,
+    AdminListUserView,
+    AdminListEventOrganizerView,
+    AdminEventOrganizerDetailListView,
+    AdminEventProposalListView,
+    AdminEventProposalConfirmView,
+    AdminEventProposalDetailView,
+    AdminEventOrganizerProposalListView,
+    AdminEventOrganizerProposalConfirmView,
+    AdminEventOrganizerProposalDetailView,
+)
+from .refund_views import RefundTicketView, AdminRefundTicketView
+from .qr_code_views import TicketQRCodeView
 
 urlpatterns = [
+    # Health Check
+    path('health/', health_check, name='health_check'),
+    
     # Authentication
     path('auth/login/', TokenObtainPairView.as_view(), name='api_token_auth'),
     path('auth/register/', RegisterUserView.as_view(), name='api_token_register'),
@@ -13,13 +46,18 @@ urlpatterns = [
     path('auth/logout/', LogoutView.as_view(), name='api_token_logout'),
 
     # Event Views
-    path('event/<uuid:id>/',CustomerEventRetreiveView.as_view(), name='event_retreive'),
+    path('event/<uuid:id>/', CustomerEventRetrieveView.as_view(), name='event_retrieve'),
     path('event/',CustomerEventListView.as_view(), name='event_list'),
     path('event/upcoming/', CustomerUpcomingEventListView.as_view(), name='event_upcoming_list'),
 
     # Ticket Views
     path('ticket/create/',TicketCreateView.as_view(),name='ticket_create'),
     path('ticket/purchase/',TicketPurchaseView.as_view(),name='ticket_purchase'),
+    path('ticket/<uuid:id>/refund/', RefundTicketView.as_view(), name='ticket_refund'),
+    path('ticket/<uuid:id>/qr/', TicketQRCodeView.as_view(), name='ticket_qr'),
+    
+    # Admin Refund
+    path('admin/ticket/<uuid:id>/refund/', AdminRefundTicketView.as_view(), name='admin_ticket_refund'),
 
     # account
     path('account/', AccountView.as_view(), name='account'),
